@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../src/config/config.php';
 require_once __DIR__ . '/../src/auth/user.php';
 $currentUser = getCurrentUser();
+$isDashboardPage = mb_strtolower((string) ($pageTitle ?? '')) === 'dashboard';
 ?><!DOCTYPE html>
 <html lang="de">
 <head>
@@ -133,6 +134,11 @@ $currentUser = getCurrentUser();
             font-size: 14px;
             font-weight: 700;
             letter-spacing: 0.1px;
+        }
+
+        .svws-topbar h1.svws-topbar-title-dashboard {
+            font-size: 34px;
+            line-height: 1;
         }
 
         .svws-top-meta {
@@ -373,6 +379,54 @@ $currentUser = getCurrentUser();
             margin-top: 2px;
         }
 
+        .svws-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+        }
+
+        .svws-nav-card {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            background: #fff;
+            border: 1px solid var(--line-soft);
+            border-radius: 10px;
+            padding: 12px;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+        }
+
+        .svws-nav-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+            border-color: #b8cfe8;
+        }
+
+        .svws-nav-card-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin: 0 0 6px;
+        }
+
+        .svws-nav-card-text {
+            color: var(--muted);
+            margin: 0;
+            font-size: 11px;
+        }
+
+        .svws-school-meta-title {
+            margin: 2px 0 14px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a3a5c;
+        }
+
+        .svws-school-meta-details {
+            font-weight: 400;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
         .svws-list {
             width: 100%;
             border-collapse: collapse;
@@ -404,6 +458,10 @@ $currentUser = getCurrentUser();
 
             .svws-content-header {
                 grid-template-columns: 1fr;
+            }
+
+            .svws-topbar h1.svws-topbar-title-dashboard {
+                font-size: 26px;
             }
         }
     </style>
@@ -450,7 +508,7 @@ $currentUser = getCurrentUser();
     <div class="svws-workspace">
         <header class="svws-topbar">
             <div>
-                <h1><?= htmlspecialchars($pageTitle) ?></h1>
+                <h1 class="<?= $isDashboardPage ? 'svws-topbar-title-dashboard' : '' ?>"><?= htmlspecialchars($pageTitle) ?></h1>
                 <div class="svws-top-meta">
                     <?= htmlspecialchars($currentUser['username'] ?? 'Gast') ?> | <?= htmlspecialchars($currentUser['role'] ?? 'viewer') ?>
                 </div>

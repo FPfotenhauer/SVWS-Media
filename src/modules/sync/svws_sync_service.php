@@ -70,6 +70,8 @@ class SvwsSyncService
 
     private static function downloadGzip(string $endpoint, bool $verifyTls, string $username, string $password): string
     {
+        // Some SVWS setups require BasicAuth even when the password is intentionally empty.
+        $useBasicAuth = trim($username) !== '';
         $authHeader = 'Authorization: Basic ' . base64_encode($username . ':' . $password);
 
         if (function_exists('curl_init')) {
@@ -80,11 +82,17 @@ class SvwsSyncService
 
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 45);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/gzip, application/octet-stream', $authHeader]);
+            $headers = ['Accept: application/gzip, application/octet-stream'];
+            if ($useBasicAuth) {
+                $headers[] = $authHeader;
+            }
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifyTls);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifyTls ? 2 : 0);
-            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-            curl_setopt($ch, CURLOPT_USERPWD, $username . ':' . $password);
+            if ($useBasicAuth) {
+                curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+                curl_setopt($ch, CURLOPT_USERPWD, $username . ':' . $password);
+            }
 
             $body = curl_exec($ch);
             $statusCode = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
@@ -111,7 +119,8 @@ class SvwsSyncService
         $context = stream_context_create([
             'http' => [
                 'method' => 'GET',
-                'header' => "Accept: application/gzip, application/octet-stream\r\n" . $authHeader . "\r\n",
+                'header' => "Accept: application/gzip, application/octet-stream\r\n"
+                    . ($useBasicAuth ? ($authHeader . "\r\n") : ''),
                 'timeout' => 45,
             ],
             'ssl' => [
@@ -175,13 +184,47 @@ class SvwsSyncService
             $teacherGroupMap = self::extractTeacherGroupMapFromGroups($groups);
         }
 
+        $schoolMeta = self::extractSchoolMeta($payload);
+
         return [
             'students' => $students,
             'teachers' => $teachers,
             'groups' => $groups,
             'studentGroupMap' => $studentGroupMap,
             'teacherGroupMap' => $teacherGroupMap,
+            'schoolMeta' => $schoolMeta,
         ];
+    }
+
+    private static function extractSchoolMeta(array $payload): array
+    {
+        // SVWS may nest school data under a 'schule' key or provide it at root level.
+        $root = isset($payload['schule']) && is_array($payload['schule']) ? $payload['schule'] : $payload;
+
+        $schulname = self::firstValue($root, ['schulbezeichnung', 'schulname', 'bezeichnungSchule', 'nameSchule', 'name', 'schulbezeichnung1']);
+        $schulnummer = self::firstValue($root, ['schulnummer', 'snr', 'schulNummer', 'schuldatennummer']);
+        $ort = self::firstValue($root, ['ort', 'ortsname', 'ort1', 'city']);
+        $plz = self::firstValue($root, ['plz', 'postleitzahl', 'zip']);
+        $mailadresse = self::firstValue($root, ['mailadresse', 'email', 'emailSchule', 'mail']);
+
+        return [
+            'schulname'   => is_string($schulname) ? $schulname : null,
+            'schulnummer' => is_string($schulnummer) || is_int($schulnummer) ? (string) $schulnummer : null,
+            'ort'         => is_string($ort) ? $ort : null,
+            'plz'         => is_string($plz) ? $plz : null,
+            'mailadresse' => is_string($mailadresse) ? $mailadresse : null,
+        ];
+    }
+
+    private static function firstValue(array $data, array $keys): mixed
+    {
+        foreach ($keys as $key) {
+            if (isset($data[$key]) && $data[$key] !== '' && $data[$key] !== null) {
+                return $data[$key];
+            }
+        }
+
+        return null;
     }
 
     private static function persistData(PDO $db, array $data): array
@@ -198,6 +241,7 @@ class SvwsSyncService
             self::syncTeachers($db, $teachers, $now);
             self::syncGroups($db, $groups, $now);
             self::syncRelations($db, $data['studentGroupMap'], $data['teacherGroupMap']);
+            self::syncSchoolMeta($db, $data['schoolMeta'], $now);
             refreshBorrowersFromSvwsData($db);
             $db->commit();
         } catch (Throwable $e) {
@@ -212,6 +256,48 @@ class SvwsSyncService
             'studentGroupLinks' => self::countTable($db, 'svws_student_groups'),
             'teacherGroupLinks' => self::countTable($db, 'svws_teacher_groups'),
         ];
+    }
+
+    private static function syncSchoolMeta(PDO $db, array $meta, string $now): void
+    {
+        // Only non-null fields overwrite existing values so a partial payload doesn't blank out known data.
+        $existing = $db->query('SELECT * FROM svws_school_meta WHERE id = 1')->fetch();
+
+        if ($existing === false) {
+            $stmt = $db->prepare(
+                'INSERT INTO svws_school_meta (id, schulname, schulnummer, ort, plz, mailadresse, updated_at)
+                 VALUES (1, :schulname, :schulnummer, :ort, :plz, :mailadresse, :updated_at)'
+            );
+            $stmt->execute([
+                'schulname'   => $meta['schulname'],
+                'schulnummer' => $meta['schulnummer'],
+                'ort'         => $meta['ort'],
+                'plz'         => $meta['plz'],
+                'mailadresse' => $meta['mailadresse'],
+                'updated_at'  => $now,
+            ]);
+
+            return;
+        }
+
+        $stmt = $db->prepare(
+            'UPDATE svws_school_meta SET
+                schulname   = COALESCE(:schulname,   schulname),
+                schulnummer = COALESCE(:schulnummer, schulnummer),
+                ort         = COALESCE(:ort,         ort),
+                plz         = COALESCE(:plz,         plz),
+                mailadresse = COALESCE(:mailadresse, mailadresse),
+                updated_at  = :updated_at
+             WHERE id = 1'
+        );
+        $stmt->execute([
+            'schulname'   => $meta['schulname'],
+            'schulnummer' => $meta['schulnummer'],
+            'ort'         => $meta['ort'],
+            'plz'         => $meta['plz'],
+            'mailadresse' => $meta['mailadresse'],
+            'updated_at'  => $now,
+        ]);
     }
 
     private static function syncStudents(PDO $db, array $items, string $now): void

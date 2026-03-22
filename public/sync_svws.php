@@ -13,15 +13,23 @@ requireLogin();
 $errorMessage = '';
 $result = null;
 
-$baseUrl = SVWS_BASE_URL;
-$schema = SVWS_SCHEMA;
-$idLernplattform = SVWS_ID_LERNPLATTFORM;
-$idSchuljahresabschnitt = SVWS_ID_SCHULJAHRESABSCHNITT;
-$verifyTls = SVWS_VERIFY_TLS;
-$username = SVWS_USERNAME;
-$password = SVWS_PASSWORD;
+$db = getDB();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Load persisted config, fall back to constants if nothing saved yet.
+$savedConfig = $db->query('SELECT * FROM svws_sync_config WHERE id = 1')->fetch();
+$baseUrl = is_array($savedConfig) && $savedConfig['base_url'] !== null ? (string) $savedConfig['base_url'] : SVWS_BASE_URL;
+$schema = is_array($savedConfig) && $savedConfig['schema'] !== null ? (string) $savedConfig['schema'] : SVWS_SCHEMA;
+$idLernplattform = is_array($savedConfig) && $savedConfig['id_lernplattform'] !== null ? (int) $savedConfig['id_lernplattform'] : SVWS_ID_LERNPLATTFORM;
+$idSchuljahresabschnitt = is_array($savedConfig) && $savedConfig['id_schuljahresabschnitt'] !== null ? (int) $savedConfig['id_schuljahresabschnitt'] : SVWS_ID_SCHULJAHRESABSCHNITT;
+$verifyTls = is_array($savedConfig) && $savedConfig['verify_tls'] !== null ? (bool) $savedConfig['verify_tls'] : SVWS_VERIFY_TLS;
+$username = is_array($savedConfig) && $savedConfig['username'] !== null ? (string) $savedConfig['username'] : SVWS_USERNAME;
+
+$storedPassword = '';
+if (is_array($savedConfig) && !empty($savedConfig['password_enc'])) {
+    $storedPassword = decryptAppValue((string) $savedConfig['password_enc']);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || (string) $_POST['action'] === 'sync_run')) {
     requireValidCsrfToken();
 
     $baseUrl = trim((string) ($_POST['baseUrl'] ?? $baseUrl));
@@ -29,8 +37,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $idLernplattform = (int) ($_POST['idLernplattform'] ?? $idLernplattform);
     $idSchuljahresabschnitt = (int) ($_POST['idSchuljahresabschnitt'] ?? $idSchuljahresabschnitt);
     $verifyTls = isset($_POST['verifyTls']) && (string) $_POST['verifyTls'] === '1';
-    $username = (string) ($_POST['username'] ?? $username);
-    $password = (string) ($_POST['password'] ?? $password);
+    $username = trim((string) ($_POST['username'] ?? $username));
+    $newPasswordInput = (string) ($_POST['syncPassword'] ?? '');
+
+    // Persist exactly what the user submits: empty stays empty.
+    $password = $newPasswordInput;
+    $passwordEnc = $newPasswordInput !== '' ? encryptAppValue($newPasswordInput) : null;
+    $storedPassword = $newPasswordInput;
+
+    // Persist config including encrypted password.
+    $upsert = $db->prepare(
+        'INSERT INTO svws_sync_config (id, base_url, schema, id_lernplattform, id_schuljahresabschnitt, verify_tls, username, password_enc, updated_at)
+         VALUES (1, :base_url, :schema, :id_lernplattform, :id_schuljahresabschnitt, :verify_tls, :username, :password_enc, :updated_at)
+         ON CONFLICT(id) DO UPDATE SET
+             base_url = excluded.base_url,
+             schema = excluded.schema,
+             id_lernplattform = excluded.id_lernplattform,
+             id_schuljahresabschnitt = excluded.id_schuljahresabschnitt,
+             verify_tls = excluded.verify_tls,
+             username = excluded.username,
+             password_enc = excluded.password_enc,
+             updated_at = excluded.updated_at'
+    );
+    $upsert->execute([
+        'base_url' => $baseUrl,
+        'schema' => $schema,
+        'id_lernplattform' => $idLernplattform,
+        'id_schuljahresabschnitt' => $idSchuljahresabschnitt,
+        'verify_tls' => (int) $verifyTls,
+        'username' => $username,
+        'password_enc' => $passwordEnc,
+        'updated_at' => gmdate('c'),
+    ]);
+
+    // Reload stored password for placeholder after save.
+    // ($storedPassword is already updated above when passwordChanged)
 
     try {
         $result = SvwsSyncService::synchronize([
@@ -56,7 +97,34 @@ if (is_array($latestRun) && is_string($latestRun['stats_json'] ?? null)) {
     }
 }
 
-$db = getDB();
+$schoolMeta = $db->query('SELECT * FROM svws_school_meta WHERE id = 1')->fetch() ?: [];
+$schoolMetaSaved = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && (string) $_POST['action'] === 'school_meta') {
+    requireValidCsrfToken();
+    $metaUpsert = $db->prepare(
+        'INSERT INTO svws_school_meta (id, schulname, schulnummer, ort, plz, mailadresse, updated_at)
+         VALUES (1, :schulname, :schulnummer, :ort, :plz, :mailadresse, :updated_at)
+         ON CONFLICT(id) DO UPDATE SET
+             schulname   = excluded.schulname,
+             schulnummer = excluded.schulnummer,
+             ort         = excluded.ort,
+             plz         = excluded.plz,
+             mailadresse = excluded.mailadresse,
+             updated_at  = excluded.updated_at'
+    );
+    $metaUpsert->execute([
+        'schulname'   => trim((string) ($_POST['schulname'] ?? '')),
+        'schulnummer' => trim((string) ($_POST['schulnummer'] ?? '')),
+        'ort'         => trim((string) ($_POST['ort'] ?? '')),
+        'plz'         => trim((string) ($_POST['plz'] ?? '')),
+        'mailadresse' => trim((string) ($_POST['mailadresse'] ?? '')),
+        'updated_at'  => gmdate('c'),
+    ]);
+    $schoolMeta = $db->query('SELECT * FROM svws_school_meta WHERE id = 1')->fetch() ?: [];
+    $schoolMetaSaved = true;
+}
+
 $counts = [
     'Schueler' => (int) $db->query('SELECT COUNT(*) AS c FROM svws_students')->fetch()['c'],
     'Lehrkraefte' => (int) $db->query('SELECT COUNT(*) AS c FROM svws_teachers')->fetch()['c'],
@@ -85,6 +153,9 @@ ob_start();
     <div class="svws-panel-body">
         <form method="post" style="display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:8px;">
             <?= csrfField() ?>
+            <input type="hidden" name="action" value="sync_run">
+            <input type="text" name="fake_username" autocomplete="username" style="display:none" tabindex="-1" aria-hidden="true">
+            <input type="password" name="fake_password" autocomplete="current-password" style="display:none" tabindex="-1" aria-hidden="true">
             <label>
                 <span class="svws-muted">SVWS Base URL</span><br>
                 <input class="svws-search" type="text" name="baseUrl" value="<?= htmlspecialchars($baseUrl) ?>">
@@ -107,7 +178,8 @@ ob_start();
             </label>
             <label>
                 <span class="svws-muted">BasicAuth Passwort</span><br>
-                <input class="svws-search" type="password" name="password" value="" autocomplete="off" placeholder="Nur fuer diesen Sync-Lauf eingeben">
+                <input class="svws-search" type="password" id="sync-password" name="syncPassword" value="" autocomplete="new-password"
+                    placeholder="<?= $storedPassword !== '' ? '(Gespeichertes Passwort – leer lassen zum Beibehalten)' : 'Passwort eingeben' ?>">
             </label>
             <label style="grid-column:1 / -1;">
                 <input type="checkbox" name="verifyTls" value="1" <?= $verifyTls ? 'checked' : '' ?>> TLS-Zertifikat pruefen
@@ -185,6 +257,45 @@ ob_start();
         </div>
     </section>
 </div>
+
+<section class="svws-panel" style="margin-top:8px;">
+    <div class="svws-panel-header">
+        <h3>Schuldaten</h3>
+        <span class="svws-muted">Werden auf der Startseite angezeigt</span>
+    </div>
+    <div class="svws-panel-body">
+        <?php if ($schoolMetaSaved): ?>
+            <p style="margin-bottom:8px;color:#0c5c0c;"><strong>Gespeichert.</strong></p>
+        <?php endif; ?>
+        <form method="post" style="display:grid;grid-template-columns:repeat(2,minmax(200px,1fr));gap:8px;">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="school_meta">
+            <label>
+                <span class="svws-muted">Schulname</span><br>
+                <input class="svws-search" type="text" name="schulname" value="<?= htmlspecialchars((string) ($schoolMeta['schulname'] ?? '')) ?>">
+            </label>
+            <label>
+                <span class="svws-muted">Schulnummer</span><br>
+                <input class="svws-search" type="text" name="schulnummer" value="<?= htmlspecialchars((string) ($schoolMeta['schulnummer'] ?? '')) ?>">
+            </label>
+            <label>
+                <span class="svws-muted">PLZ</span><br>
+                <input class="svws-search" type="text" name="plz" value="<?= htmlspecialchars((string) ($schoolMeta['plz'] ?? '')) ?>">
+            </label>
+            <label>
+                <span class="svws-muted">Ort</span><br>
+                <input class="svws-search" type="text" name="ort" value="<?= htmlspecialchars((string) ($schoolMeta['ort'] ?? '')) ?>">
+            </label>
+            <label style="grid-column:1 / -1;">
+                <span class="svws-muted">E-Mail-Adresse</span><br>
+                <input class="svws-search" type="email" name="mailadresse" value="<?= htmlspecialchars((string) ($schoolMeta['mailadresse'] ?? '')) ?>">
+            </label>
+            <div style="grid-column:1 / -1;">
+                <button class="svws-help-btn" type="submit">Schuldaten speichern</button>
+            </div>
+        </form>
+    </div>
+</section>
 <?php
 $content = ob_get_clean();
 

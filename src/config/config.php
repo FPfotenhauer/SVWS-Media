@@ -29,3 +29,21 @@ if (!defined('SVWS_USERNAME')) {
 if (!defined('SVWS_PASSWORD')) {
 	define('SVWS_PASSWORD', getenv('SVWS_PASSWORD') !== false ? (string) getenv('SVWS_PASSWORD') : '');
 }
+
+if (!defined('APP_SECRET')) {
+	$_appSecretEnv = getenv('APP_SECRET');
+	if ($_appSecretEnv !== false && $_appSecretEnv !== '') {
+		define('APP_SECRET', $_appSecretEnv);
+	} else {
+		$_appSecretFile = __DIR__ . '/../../data/app_secret.key';
+		if (!is_file($_appSecretFile)) {
+			$_generated = bin2hex(random_bytes(32));
+			file_put_contents($_appSecretFile, $_generated);
+			chmod($_appSecretFile, 0600);
+			define('APP_SECRET', $_generated);
+		} else {
+			define('APP_SECRET', trim((string) file_get_contents($_appSecretFile)));
+		}
+	}
+	unset($_appSecretEnv, $_appSecretFile, $_generated);
+}
