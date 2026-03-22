@@ -22,6 +22,8 @@ $username = SVWS_USERNAME;
 $password = SVWS_PASSWORD;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireValidCsrfToken();
+
     $baseUrl = trim((string) ($_POST['baseUrl'] ?? $baseUrl));
     $schema = trim((string) ($_POST['schema'] ?? $schema));
     $idLernplattform = (int) ($_POST['idLernplattform'] ?? $idLernplattform);
@@ -85,6 +87,7 @@ ob_start();
     </div>
     <div class="svws-panel-body">
         <form method="post" style="display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:8px;">
+            <?= csrfField() ?>
             <label>
                 <span class="svws-muted">SVWS Base URL</span><br>
                 <input class="svws-search" type="text" name="baseUrl" value="<?= htmlspecialchars($baseUrl) ?>">
@@ -107,7 +110,7 @@ ob_start();
             </label>
             <label>
                 <span class="svws-muted">BasicAuth Passwort</span><br>
-                <input class="svws-search" type="password" name="password" value="<?= htmlspecialchars($password) ?>">
+                <input class="svws-search" type="password" name="password" value="" autocomplete="off" placeholder="Nur fuer diesen Sync-Lauf eingeben">
             </label>
             <label style="grid-column:1 / -1;">
                 <input type="checkbox" name="verifyTls" value="1" <?= $verifyTls ? 'checked' : '' ?>> TLS-Zertifikat pruefen

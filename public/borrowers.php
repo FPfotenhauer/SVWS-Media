@@ -15,6 +15,8 @@ $flashType = trim((string) ($_GET['flash_type'] ?? ''));
 $flashMessage = trim((string) ($_GET['flash_message'] ?? ''));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireValidCsrfToken();
+
     $action = (string) ($_POST['action'] ?? '');
     $search = trim((string) ($_POST['q'] ?? $search));
     $selectedBorrowerId = max(0, (int) ($_POST['borrower_id'] ?? $selectedBorrowerId));
@@ -136,6 +138,7 @@ ob_start();
                 </div>
 
                 <form method="post" style="display:grid; gap:8px; margin-bottom:8px;">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="save_memo">
                     <input type="hidden" name="q" value="<?= htmlspecialchars($search) ?>">
                     <input type="hidden" name="borrower_id" value="<?= (int) $selectedBorrower['id'] ?>">
@@ -149,6 +152,7 @@ ob_start();
                 </form>
 
                 <form method="post" style="display:inline-block; margin-right:8px;">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="toggle_block">
                     <input type="hidden" name="q" value="<?= htmlspecialchars($search) ?>">
                     <input type="hidden" name="borrower_id" value="<?= (int) $selectedBorrower['id'] ?>">
@@ -159,6 +163,7 @@ ob_start();
                 </form>
 
                 <form method="post" style="display:inline-block;" onsubmit="return confirm('Ausleihkonto wirklich migrieren?');">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="migrate">
                     <input type="hidden" name="q" value="<?= htmlspecialchars($search) ?>">
                     <input type="hidden" name="borrower_id" value="<?= (int) $selectedBorrower['id'] ?>">

@@ -11,11 +11,14 @@ requireAdmin();
 
 $currentUser = getCurrentUser();
 $currentUserId = (int) ($currentUser['id'] ?? 0);
+$forcePasswordChange = isset($_GET['force_pw_change']) && (string) $_GET['force_pw_change'] === '1';
 
 $errorMessage = '';
 $successMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireValidCsrfToken();
+
     $action = (string) ($_POST['action'] ?? 'create');
 
     if ($action === 'create') {
@@ -26,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (createUser($username, $password, $role)) {
             $successMessage = 'Benutzer wurde angelegt.';
         } else {
-            $errorMessage = 'Benutzer konnte nicht angelegt werden (Name evtl. vorhanden oder Eingabe ungueltig).';
+            $errorMessage = 'Benutzer konnte nicht angelegt werden (Name evtl. vorhanden oder Eingabe ungueltig). ' . getPasswordPolicyMessage();
         }
     } elseif ($action === 'change_password') {
         $oldPassword = (string) ($_POST['old_password'] ?? '');
@@ -34,8 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (changeOwnPassword($currentUserId, $oldPassword, $newPassword)) {
             $successMessage = 'Passwort wurde geaendert.';
+            $forcePasswordChange = false;
         } else {
-            $errorMessage = 'Passwort konnte nicht geaendert werden (aktuelles Passwort oder Eingabe ungueltig).';
+            $errorMessage = 'Passwort konnte nicht geaendert werden (aktuelles Passwort oder Eingabe ungueltig). ' . getPasswordPolicyMessage();
         }
     } elseif ($action === 'toggle_active') {
         $targetUserId = (int) ($_POST['target_user_id'] ?? 0);
@@ -74,7 +78,13 @@ ob_start();
         <h3>Neuen Benutzer anlegen</h3>
     </div>
     <div class="svws-panel-body">
+        <?php if ($forcePasswordChange): ?>
+            <p style="margin-top:0;color:#a40000;"><strong>Sicherheits-Hinweis:</strong> Bitte zuerst das Standardpasswort aendern.</p>
+        <?php endif; ?>
+        <p class="svws-muted" style="margin-top:0;"><?= htmlspecialchars(getPasswordPolicyMessage()) ?></p>
+
         <form method="post" style="display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:8px;">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="create">
             <label>
                 <span class="svws-muted">Benutzername</span><br>
@@ -111,6 +121,7 @@ ob_start();
     </div>
     <div class="svws-panel-body">
         <form method="post" style="display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:8px;max-width:640px;">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="change_password">
             <label>
                 <span class="svws-muted">Aktuelles Passwort</span><br>
@@ -152,12 +163,14 @@ ob_start();
                     <td>
                         <?php if ((int) $user['id'] !== $currentUserId): ?>
                             <form method="post" style="display:inline-block; margin-right:4px;">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="toggle_active">
                                 <input type="hidden" name="target_user_id" value="<?= htmlspecialchars((string) $user['id']) ?>">
                                 <input type="hidden" name="new_active" value="<?= (int) ($user['is_active'] ?? 0) === 1 ? '0' : '1' ?>">
                                 <button class="svws-help-btn" type="submit"><?= (int) ($user['is_active'] ?? 0) === 1 ? 'Deaktivieren' : 'Aktivieren' ?></button>
                             </form>
                             <form method="post" style="display:inline-block;">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="delete_user">
                                 <input type="hidden" name="target_user_id" value="<?= htmlspecialchars((string) $user['id']) ?>">
                                 <button class="svws-help-btn" type="submit">Loeschen</button>

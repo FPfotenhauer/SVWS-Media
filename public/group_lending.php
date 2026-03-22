@@ -20,6 +20,8 @@ $flashType = trim((string) ($_GET['flash_type'] ?? ''));
 $flashMessage = trim((string) ($_GET['flash_message'] ?? ''));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireValidCsrfToken();
+
     $action = (string) ($_POST['action'] ?? '');
     $groupSearch = trim((string) ($_POST['group_q'] ?? $groupSearch));
     $selectedGroupId = max(0, (int) ($_POST['group_id'] ?? $selectedGroupId));
@@ -202,6 +204,7 @@ ob_start();
                 <?php endif; ?>
 
                 <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px; margin-bottom:10px;">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="scan_group">
                     <input type="hidden" name="group_q" value="<?= htmlspecialchars($groupSearch) ?>">
                     <input type="hidden" name="group_id" value="<?= (int) $selectedGroupId ?>">
@@ -233,6 +236,7 @@ ob_start();
                         </div>
                         <div class="svws-panel-body">
                             <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px;">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="assign_unknown_group">
                                 <input type="hidden" name="group_q" value="<?= htmlspecialchars($groupSearch) ?>">
                                 <input type="hidden" name="group_id" value="<?= (int) $selectedGroupId ?>">

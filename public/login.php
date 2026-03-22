@@ -14,6 +14,8 @@ $errorMessage = '';
 $username = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireValidCsrfToken();
+
     $username = trim((string) ($_POST['username'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
 
@@ -22,7 +24,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $errorMessage = 'Ungueltiger Benutzername oder Passwort.';
+    $errorMessage = getAndClearLastLoginError();
+    if ($errorMessage === '') {
+        $errorMessage = 'Ungueltiger Benutzername oder Passwort.';
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -48,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-card">
         <h1>SVWS-Media Anmeldung</h1>
         <form method="post">
+            <?= csrfField() ?>
             <label>
                 Benutzername
                 <input type="text" name="username" value="<?= htmlspecialchars($username) ?>" required>

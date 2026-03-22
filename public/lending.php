@@ -19,6 +19,8 @@ $flashType = trim((string) ($_GET['flash_type'] ?? ''));
 $flashMessage = trim((string) ($_GET['flash_message'] ?? ''));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireValidCsrfToken();
+
     $action = (string) ($_POST['action'] ?? '');
     $borrowerSearch = trim((string) ($_POST['borrower_q'] ?? $borrowerSearch));
     $selectedBorrowerId = max(0, (int) ($_POST['borrower_id'] ?? $selectedBorrowerId));
@@ -183,6 +185,7 @@ ob_start();
                 </div>
 
                 <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px; margin-bottom:8px;">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="scan">
                     <input type="hidden" name="borrower_q" value="<?= htmlspecialchars($borrowerSearch) ?>">
                     <input type="hidden" name="borrower_id" value="<?= (int) $selectedBorrowerId ?>">
@@ -214,6 +217,7 @@ ob_start();
                 </form>
 
                 <form method="post" style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="return">
                     <input type="hidden" name="borrower_q" value="<?= htmlspecialchars($borrowerSearch) ?>">
                     <input type="hidden" name="borrower_id" value="<?= (int) $selectedBorrowerId ?>">
@@ -229,6 +233,7 @@ ob_start();
                         </div>
                         <div class="svws-panel-body">
                             <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px;">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="assign_unknown">
                                 <input type="hidden" name="borrower_q" value="<?= htmlspecialchars($borrowerSearch) ?>">
                                 <input type="hidden" name="borrower_id" value="<?= (int) $selectedBorrowerId ?>">

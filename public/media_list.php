@@ -15,6 +15,8 @@ $flashType = trim((string) ($_GET['flash_type'] ?? ''));
 $flashMessage = trim((string) ($_GET['flash_message'] ?? ''));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireValidCsrfToken();
+
     $action = (string) ($_POST['action'] ?? '');
     $selectedTitleId = max(0, (int) ($_POST['title_id'] ?? $selectedTitleId));
 
@@ -105,6 +107,7 @@ ob_start();
             </form>
 
             <form method="post" style="display:grid; gap:6px; margin-bottom:8px;">
+                <?= csrfField() ?>
                 <input type="hidden" name="action" value="create_title">
                 <input class="svws-search" type="text" name="title" placeholder="Neuer Titel" required>
                 <input class="svws-search" type="text" name="type" placeholder="Typ (optional)">
@@ -167,6 +170,7 @@ ob_start();
             <?php else: ?>
                 <h3 style="margin-bottom: 6px;">Titel bearbeiten</h3>
                 <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px; margin-bottom:8px;">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="update_title">
                     <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
                     <label>
@@ -187,6 +191,7 @@ ob_start();
                 </form>
 
                 <form method="post" onsubmit="return confirm('Titel wirklich loeschen?');" style="margin-bottom:10px;">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="delete_title">
                     <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
                     <button class="svws-help-btn" type="submit">Titel loeschen</button>
@@ -194,6 +199,7 @@ ob_start();
 
                 <h3 style="margin-bottom: 6px;">Exemplar anlegen</h3>
                 <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px; margin-bottom:8px;">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="create_copy">
                     <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
                     <label>
@@ -241,6 +247,7 @@ ob_start();
                                 <td><?= htmlspecialchars((string) $copy['id']) ?></td>
                                 <td>
                                     <form method="post" style="display:flex; gap:4px; align-items:center;">
+                                        <?= csrfField() ?>
                                         <input type="hidden" name="action" value="update_copy">
                                         <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
                                         <input type="hidden" name="copy_id" value="<?= (int) $copy['id'] ?>">
@@ -264,6 +271,7 @@ ob_start();
                                     </form>
 
                                     <form method="post" style="display:inline-block; margin-top:4px;">
+                                        <?= csrfField() ?>
                                         <input type="hidden" name="action" value="update_copy">
                                         <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
                                         <input type="hidden" name="copy_id" value="<?= (int) $copy['id'] ?>">
@@ -276,6 +284,7 @@ ob_start();
                                     </form>
 
                                     <form method="post" style="display:inline-block; margin-top:4px;" onsubmit="return confirm('Exemplar wirklich loeschen?');">
+                                        <?= csrfField() ?>
                                         <input type="hidden" name="action" value="delete_copy">
                                         <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
                                         <input type="hidden" name="copy_id" value="<?= (int) $copy['id'] ?>">

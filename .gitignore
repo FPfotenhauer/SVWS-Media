@@ -1,0 +1,6 @@
+# Local runtime database files
+data/database.sqlite
+data/*.sqlite
+data/*.sqlite-journal
+data/*.sqlite-wal
+data/*.sqlite-shm

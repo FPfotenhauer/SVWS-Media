@@ -48,33 +48,59 @@ function ensureAuthSchemaAndDefaultUser(PDO $db): void
     if (!in_array('is_active', $columns, true)) {
         $db->exec('ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1');
     }
+    if (!in_array('must_change_password', $columns, true)) {
+        $db->exec('ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0');
+    }
+
+    $db->exec(
+        'CREATE TABLE IF NOT EXISTS login_attempts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            ip_address TEXT NOT NULL,
+            attempted_at TEXT NOT NULL,
+            success INTEGER NOT NULL DEFAULT 0
+        )'
+    );
+    $db->exec('CREATE INDEX IF NOT EXISTS idx_login_attempts_username_ip_time ON login_attempts(username, ip_address, attempted_at)');
+    $db->exec('CREATE INDEX IF NOT EXISTS idx_login_attempts_attempted_at ON login_attempts(attempted_at)');
 
     $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_unique ON users(username)');
 
-    $adminStmt = $db->prepare('SELECT id, password_hash, is_active FROM users WHERE username = :username LIMIT 1');
+    $adminStmt = $db->prepare('SELECT id, password_hash, is_active, must_change_password FROM users WHERE username = :username LIMIT 1');
     $adminStmt->execute(['username' => 'Admin']);
     $admin = $adminStmt->fetch();
 
     $defaultHash = password_hash('admin', PASSWORD_DEFAULT);
     if ($admin === false) {
-        $insert = $db->prepare('INSERT INTO users (username, password_hash, is_active, role) VALUES (:username, :password_hash, :is_active, :role)');
+        $insert = $db->prepare('INSERT INTO users (username, password_hash, is_active, must_change_password, role) VALUES (:username, :password_hash, :is_active, :must_change_password, :role)');
         $insert->execute([
             'username' => 'Admin',
             'password_hash' => $defaultHash,
             'is_active' => 1,
+            'must_change_password' => 1,
             'role' => 'admin',
         ]);
         return;
     }
 
     if (trim((string) ($admin['password_hash'] ?? '')) === '' || (int) ($admin['is_active'] ?? 0) !== 1) {
-        $update = $db->prepare('UPDATE users SET password_hash = :password_hash, is_active = :is_active, role = :role WHERE id = :id');
+        $update = $db->prepare('UPDATE users SET password_hash = :password_hash, is_active = :is_active, must_change_password = :must_change_password, role = :role WHERE id = :id');
         $update->execute([
             'password_hash' => $defaultHash,
             'is_active' => 1,
+            'must_change_password' => 1,
             'role' => 'admin',
             'id' => (int) $admin['id'],
         ]);
+        return;
+    }
+
+    // Force an immediate password change while default credentials are still active.
+    if ((string) ($admin['password_hash'] ?? '') !== ''
+        && password_verify('admin', (string) $admin['password_hash'])
+        && (int) ($admin['must_change_password'] ?? 0) !== 1) {
+        $forceChange = $db->prepare('UPDATE users SET must_change_password = 1 WHERE id = :id');
+        $forceChange->execute(['id' => (int) $admin['id']]);
     }
 }
 
