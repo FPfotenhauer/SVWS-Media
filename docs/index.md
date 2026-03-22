@@ -1,1 +1,25 @@
-# Benutzer-Dokumentation
+# Benutzerhandbuch SVWS-Media
+
+## Inhaltsverzeichnis
+
+1. [Einleitung](01-einleitung.md)
+2. [Zielgruppe und Rollen](02-zielgruppe-und-rollen.md)
+3. [Systemvoraussetzungen](03-systemvoraussetzungen.md)
+4. [Anmeldung und Sicherheit](04-anmeldung-und-sicherheit.md)
+5. [Aufbau der Benutzeroberfläche](05-aufbau-der-benutzeroberflaeche.md)
+6. [Dashboard und Übersicht](06-dashboard-und-uebersicht.md)
+7. [Medienbestand verwalten](07-medienbestand-verwalten.md)
+8. [Ausleihe und Rückgabe](08-ausleihe-und-rueckgabe.md)
+9. [Ausleiher verwalten](09-ausleiher-verwalten.md)
+10. [SVWS-Synchronisation konfigurieren](10-svws-synchronisation-konfigurieren.md)
+11. [SVWS-Synchronisation durchführen](11-svws-synchronisation-durchfuehren.md)
+12. [SVWS-Stammdaten einsehen](12-svws-stammdaten-einsehen.md)
+13. [Schuldaten pflegen](13-schuldaten-pflegen.md)
+14. [Druck und Export](14-druck-und-export.md)
+15. [Benutzerverwaltung](15-benutzerverwaltung.md)
+16. [Typische Arbeitsabläufe](16-typische-arbeitsablaeufe.md)
+17. [Fehlerbehebung und FAQ](17-fehlerbehebung-und-faq.md)
+18. [Datenschutz und Datensicherung](18-datenschutz-und-datensicherung.md)
+19. [Update- und Wartungshinweise](19-update-und-wartungshinweise.md)
+20. [Glossar](20-glossar.md)
+21. [Kontakt und Support](21-kontakt-und-support.md)

@@ -102,4 +102,4 @@ ob_start();
 <?php
 $content = ob_get_clean();
 
-renderLayout('Druck & Export', $content, 'data');
+renderLayout('Druck & Export', $content, 'reports');

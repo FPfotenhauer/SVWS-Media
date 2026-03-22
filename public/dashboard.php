@@ -62,33 +62,63 @@ ob_start();
     <div class="svws-panel-body">
         <div class="svws-card-grid">
             <a class="svws-nav-card" href="/media_list.php">
-                <p class="svws-nav-card-title">Medienbestand</p>
-                <p class="svws-nav-card-text">Verwaltung der vorhandenen Medien und Stammdaten.</p>
+                <span class="svws-nav-card-icon" aria-hidden="true">
+                    <i class="ri-book-open-line" aria-hidden="true"></i>
+                </span>
+                <span class="svws-nav-card-body">
+                    <p class="svws-nav-card-title">Medienbestand</p>
+                    <p class="svws-nav-card-text">Verwaltung der vorhandenen Medien und Stammdaten.</p>
+                </span>
             </a>
 
             <a class="svws-nav-card" href="/lending.php">
-                <p class="svws-nav-card-title">Ausleihe</p>
-                <p class="svws-nav-card-text">Ausgabe und Rückgabe per Barcode inkl. Zuordnung unbekannter Barcodes.</p>
+                <span class="svws-nav-card-icon" aria-hidden="true">
+                    <i class="ri-exchange-line" aria-hidden="true"></i>
+                </span>
+                <span class="svws-nav-card-body">
+                    <p class="svws-nav-card-title">Ausleihe</p>
+                    <p class="svws-nav-card-text">Ausgabe und Rückgabe per Barcode inkl. Zuordnung unbekannter Barcodes.</p>
+                </span>
             </a>
 
             <a class="svws-nav-card" href="/sync_svws.php">
-                <p class="svws-nav-card-title">SVWS Sync</p>
-                <p class="svws-nav-card-text">Import von Schüler- und Lehrerdaten aus dem SVWS-Server.</p>
+                <span class="svws-nav-card-icon" aria-hidden="true">
+                    <i class="ri-arrow-left-right-line" aria-hidden="true"></i>
+                </span>
+                <span class="svws-nav-card-body">
+                    <p class="svws-nav-card-title">SVWS Sync</p>
+                    <p class="svws-nav-card-text">Import von Schüler- und Lehrerdaten aus dem SVWS-Server.</p>
+                </span>
             </a>
 
             <a class="svws-nav-card" href="/sync_data.php">
-                <p class="svws-nav-card-title">SVWS Daten</p>
-                <p class="svws-nav-card-text">Tabellenansichten für synchronisierte Schüler- und Lehrerdaten.</p>
+                <span class="svws-nav-card-icon" aria-hidden="true">
+                    <i class="ri-database-2-line" aria-hidden="true"></i>
+                </span>
+                <span class="svws-nav-card-body">
+                    <p class="svws-nav-card-title">SVWS Daten</p>
+                    <p class="svws-nav-card-text">Tabellenansichten für synchronisierte Schüler- und Lehrerdaten.</p>
+                </span>
             </a>
 
             <a class="svws-nav-card" href="/borrowers.php">
-                <p class="svws-nav-card-title">Ausleiher</p>
-                <p class="svws-nav-card-text">Sperren, Memo, Kontomigration und Vorjahres-Ausleihen.</p>
+                <span class="svws-nav-card-icon" aria-hidden="true">
+                    <i class="ri-user-3-line" aria-hidden="true"></i>
+                </span>
+                <span class="svws-nav-card-body">
+                    <p class="svws-nav-card-title">Ausleiher</p>
+                    <p class="svws-nav-card-text">Sperren, Memo, Kontomigration und Vorjahres-Ausleihen.</p>
+                </span>
             </a>
 
             <a class="svws-nav-card" href="/reports.php">
-                <p class="svws-nav-card-title">Druck & Export</p>
-                <p class="svws-nav-card-text">Druckansichten und CSV-Exporte für Medienbestand und Kontoauszüge.</p>
+                <span class="svws-nav-card-icon" aria-hidden="true">
+                    <i class="ri-printer-line" aria-hidden="true"></i>
+                </span>
+                <span class="svws-nav-card-body">
+                    <p class="svws-nav-card-title">Druck & Export</p>
+                    <p class="svws-nav-card-text">Druckansichten und CSV-Exporte für Medienbestand und Kontoauszüge.</p>
+                </span>
             </a>
         </div>
     </div>

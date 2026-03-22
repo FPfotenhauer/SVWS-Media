@@ -381,37 +381,75 @@ $isDashboardPage = mb_strtolower((string) ($pageTitle ?? '')) === 'dashboard';
 
         .svws-card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
         }
 
         .svws-nav-card {
-            display: block;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
             text-decoration: none;
             color: inherit;
             background: #fff;
-            border: 1px solid var(--line-soft);
-            border-radius: 10px;
-            padding: 12px;
+            border: 2px solid #2f6fae;
+            border-radius: 12px;
+            min-height: 164px;
+            padding: 18px;
             transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
         }
 
         .svws-nav-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-            border-color: #b8cfe8;
+            box-shadow: 0 8px 14px rgba(0, 0, 0, 0.1);
+            border-color: #1f5588;
+        }
+
+        .svws-nav-card-icon {
+            flex: 0 0 46px;
+            width: 46px;
+            height: 46px;
+            border-radius: 10px;
+            background: #e9f2fb;
+            border: 1px solid #b9d2eb;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #1f5f95;
+        }
+
+        .svws-nav-card-icon i {
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        .svws-nav-card-body {
+            display: flex;
+            flex-direction: column;
         }
 
         .svws-nav-card-title {
-            font-size: 13px;
+            font-size: 17px;
             font-weight: 700;
-            margin: 0 0 6px;
+            margin: 2px 0 8px;
         }
 
         .svws-nav-card-text {
             color: var(--muted);
             margin: 0;
-            font-size: 11px;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        @media (max-width: 780px) {
+            .svws-card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .svws-nav-card {
+                min-height: 150px;
+                padding: 16px;
+            }
         }
 
         .svws-school-meta-title {
@@ -490,6 +528,10 @@ $isDashboardPage = mb_strtolower((string) ($pageTitle ?? '')) === 'dashboard';
             <a class="<?= $activeNav === 'sync' ? 'active' : '' ?>" href="/sync_svws.php">
                 <i class="ri-arrow-left-right-line svws-nav-icon" aria-hidden="true"></i>
                 <span class="svws-nav-label">Sync</span>
+            </a>
+            <a class="<?= $activeNav === 'reports' ? 'active' : '' ?>" href="/reports.php">
+                <i class="ri-printer-line svws-nav-icon" aria-hidden="true"></i>
+                <span class="svws-nav-label">Druck</span>
             </a>
         </nav>
         <div class="svws-spacer"></div>
