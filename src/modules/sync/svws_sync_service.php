@@ -168,6 +168,7 @@ class SvwsSyncService
     private static function normalizePayload(array $payload): array
     {
         $students = self::extractList($payload, ['schueler', 'schuelerListe', 'students']);
+        $classes = self::extractList($payload, ['Klassen', 'klassen', 'classes']);
         $teachers = self::extractList($payload, ['lehrer', 'lehrkraefte', 'lehrkraefteListe', 'teachers']);
         $groups = self::extractList($payload, ['lerngruppen', 'kurse', 'gruppen', 'groups']);
 
@@ -188,6 +189,7 @@ class SvwsSyncService
 
         return [
             'students' => $students,
+            'classes' => $classes,
             'teachers' => $teachers,
             'groups' => $groups,
             'studentGroupMap' => $studentGroupMap,
@@ -230,6 +232,7 @@ class SvwsSyncService
     private static function persistData(PDO $db, array $data): array
     {
         $students = $data['students'];
+        $classLookup = self::buildClassLookup($data['classes'] ?? []);
         $teachers = $data['teachers'];
         $groups = $data['groups'];
 
@@ -237,7 +240,7 @@ class SvwsSyncService
 
         $db->beginTransaction();
         try {
-            self::syncStudents($db, $students, $now);
+            self::syncStudents($db, $students, $classLookup, $now);
             self::syncTeachers($db, $teachers, $now);
             self::syncGroups($db, $groups, $now);
             self::syncRelations($db, $data['studentGroupMap'], $data['teacherGroupMap']);
@@ -300,7 +303,7 @@ class SvwsSyncService
         ]);
     }
 
-    private static function syncStudents(PDO $db, array $items, string $now): void
+    private static function syncStudents(PDO $db, array $items, array $classLookup, string $now): void
     {
         $ids = [];
         $stmt = $db->prepare(
@@ -330,13 +333,19 @@ class SvwsSyncService
 
             $vorname = self::pickString($item, ['vorname', 'rufname']);
             $nachname = self::pickString($item, ['nachname']);
+            $classFromLookup = '';
+            $classId = self::extractId($item, ['idKlasse', 'klasseId', 'id_klasse']);
+            if ($classId !== null) {
+                $classFromLookup = $classLookup[$classId] ?? '';
+            }
+            $klasse = $classFromLookup !== '' ? $classFromLookup : self::extractStudentClass($item);
 
             $stmt->execute([
                 'svws_id' => $svwsId,
                 'nachname' => $nachname,
                 'vorname' => $vorname,
                 'anzeige_name' => trim($nachname . ', ' . $vorname, ' ,'),
-                'klasse' => self::pickString($item, ['klasse', 'klassenbezeichnung', 'lerngruppe']),
+                'klasse' => $klasse,
                 'status' => self::pickString($item, ['status']),
                 'email' => self::pickString($item, ['email', 'eMailAdresse']),
                 'raw_json' => json_encode($item, JSON_UNESCAPED_UNICODE),
@@ -345,6 +354,82 @@ class SvwsSyncService
         }
 
         self::deleteMissing($db, 'svws_students', $ids);
+    }
+
+    private static function extractStudentClass(array $item): string
+    {
+        $direct = self::pickString($item, [
+            'klasse',
+            'klassenbezeichnung',
+            'klasseKuerzel',
+            'bezeichnungKlasse',
+            'lerngruppe',
+        ]);
+        if ($direct !== '') {
+            return $direct;
+        }
+
+        // Some payload variants nest class information as an object.
+        if (isset($item['klasse']) && is_array($item['klasse'])) {
+            $nested = self::pickString($item['klasse'], ['kuerzel', 'bezeichnung', 'name', 'anzeige']);
+            if ($nested !== '') {
+                return $nested;
+            }
+        }
+
+        // Some payloads expose class references as list-like structures.
+        foreach (['klassen', 'lerngruppen'] as $listKey) {
+            if (!isset($item[$listKey]) || !is_array($item[$listKey])) {
+                continue;
+            }
+
+            foreach ($item[$listKey] as $classRef) {
+                if (is_array($classRef)) {
+                    $fromRef = self::pickString($classRef, ['kuerzel', 'bezeichnung', 'name', 'anzeige']);
+                    if ($fromRef !== '') {
+                        return $fromRef;
+                    }
+                } elseif (is_scalar($classRef)) {
+                    $fromScalar = trim((string) $classRef);
+                    if ($fromScalar !== '') {
+                        return $fromScalar;
+                    }
+                }
+            }
+        }
+
+        return '';
+    }
+
+    private static function buildClassLookup(array $classes): array
+    {
+        $lookup = [];
+
+        foreach ($classes as $classItem) {
+            if (!is_array($classItem)) {
+                continue;
+            }
+
+            $id = self::extractId($classItem, ['id', 'idKlasse', 'klasseId', 'id_klasse']);
+            if ($id === null) {
+                continue;
+            }
+
+            $label = self::pickString($classItem, [
+                'kuerzel',
+                'bezeichnung',
+                'anzeigename',
+                'name',
+                'klassenbezeichnung',
+            ]);
+            if ($label === '') {
+                continue;
+            }
+
+            $lookup[$id] = $label;
+        }
+
+        return $lookup;
     }
 
     private static function syncTeachers(PDO $db, array $items, string $now): void

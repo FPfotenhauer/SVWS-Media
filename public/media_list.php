@@ -101,11 +101,6 @@ ob_start();
             <span class="svws-muted">Titel</span>
         </div>
         <div class="svws-panel-body">
-            <form method="get" style="display:flex; gap:6px; margin-bottom:8px; align-items:center;">
-                <input class="svws-search" type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Titel suchen">
-                <button class="svws-help-btn" type="submit">Suchen</button>
-            </form>
-
             <form method="post" style="display:grid; gap:6px; margin-bottom:8px;">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="create_title">
@@ -115,12 +110,20 @@ ob_start();
                 <button class="svws-help-btn" type="submit">Titel anlegen</button>
             </form>
 
+            <div style="margin:10px 0 8px; padding-top:8px; border-top:2px solid #c5d8ec;">
+                <p class="svws-muted" style="margin:0 0 6px; font-weight:600;">Titel suchen</p>
+                <form method="get" style="display:flex; gap:6px; align-items:center;">
+                    <input class="svws-search" type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Titel suchen">
+                    <button class="svws-help-btn" type="submit">Suchen</button>
+                </form>
+            </div>
+
             <table class="svws-list">
                 <thead>
                 <tr>
                     <th style="width: 56%;">Titel</th>
                     <th style="width: 22%;">Typ</th>
-                    <th style="width: 22%;">Bestand</th>
+                    <th style="width: 22%; text-align: right;">Bestand</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -138,7 +141,7 @@ ob_start();
                                 </a>
                             </td>
                             <td><?= htmlspecialchars((string) ($media['type'] ?? '')) ?></td>
-                            <td><?= htmlspecialchars((string) $media['copy_count']) ?></td>
+                            <td style="text-align: right;"><?= htmlspecialchars((string) $media['copy_count']) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
