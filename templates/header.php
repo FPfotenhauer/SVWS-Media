@@ -429,14 +429,6 @@ $currentUser = getCurrentUser();
                 <i class="ri-exchange-line svws-nav-icon" aria-hidden="true"></i>
                 <span class="svws-nav-label">Leihe</span>
             </a>
-            <a class="<?= $activeNav === 'classes' ? 'active' : '' ?>" href="/borrowers.php">
-                <i class="ri-group-line svws-nav-icon" aria-hidden="true"></i>
-                <span class="svws-nav-label">Klassen</span>
-            </a>
-            <a class="<?= $activeNav === 'courses' ? 'active' : '' ?>" href="/group_lending.php">
-                <i class="ri-archive-stack-line svws-nav-icon" aria-hidden="true"></i>
-                <span class="svws-nav-label">Kurse</span>
-            </a>
             <a class="<?= $activeNav === 'sync' ? 'active' : '' ?>" href="/sync_svws.php">
                 <i class="ri-arrow-left-right-line svws-nav-icon" aria-hidden="true"></i>
                 <span class="svws-nav-label">Sync</span>

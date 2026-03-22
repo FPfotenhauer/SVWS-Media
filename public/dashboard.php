@@ -54,18 +54,13 @@ ob_start();
             </tr>
             <tr>
                 <td>SVWS Sync</td>
-                <td>Import von Schueler-, Lehrer- und Lerngruppendaten aus dem SVWS-Server.</td>
+                <td>Import von Schueler- und Lehrerdaten aus dem SVWS-Server.</td>
                 <td><a href="/sync_svws.php">Oeffnen</a></td>
             </tr>
             <tr>
                 <td>SVWS Daten</td>
-                <td>Tabellenansichten fuer synchronisierte Schueler-, Lehrer- und Lerngruppendaten.</td>
+                <td>Tabellenansichten fuer synchronisierte Schueler- und Lehrerdaten.</td>
                 <td><a href="/sync_data.php">Oeffnen</a></td>
-            </tr>
-            <tr>
-                <td>Gruppenausleihe</td>
-                <td>Kurs-/Gruppenlauf mit festem Titel und Barcode-Verteilung auf Gruppenmitglieder.</td>
-                <td><a href="/group_lending.php">Oeffnen</a></td>
             </tr>
             <tr>
                 <td>Ausleiher</td>
@@ -74,7 +69,7 @@ ob_start();
             </tr>
             <tr>
                 <td>Druck & Export</td>
-                <td>Druckansichten und CSV-Exporte fuer Medienbestand, Kontoauszuege und Kurslisten.</td>
+                <td>Druckansichten und CSV-Exporte fuer Medienbestand und Kontoauszuege.</td>
                 <td><a href="/reports.php">Oeffnen</a></td>
             </tr>
             </tbody>

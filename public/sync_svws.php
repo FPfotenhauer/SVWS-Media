@@ -60,9 +60,6 @@ $db = getDB();
 $counts = [
     'Schueler' => (int) $db->query('SELECT COUNT(*) AS c FROM svws_students')->fetch()['c'],
     'Lehrkraefte' => (int) $db->query('SELECT COUNT(*) AS c FROM svws_teachers')->fetch()['c'],
-    'Lerngruppen' => (int) $db->query('SELECT COUNT(*) AS c FROM svws_groups')->fetch()['c'],
-    'Schueler-Lerngruppen' => (int) $db->query('SELECT COUNT(*) AS c FROM svws_student_groups')->fetch()['c'],
-    'Lehrer-Lerngruppen' => (int) $db->query('SELECT COUNT(*) AS c FROM svws_teacher_groups')->fetch()['c'],
 ];
 
 ob_start();

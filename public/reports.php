@@ -11,7 +11,6 @@ require_once __DIR__ . '/../templates/layout.php';
 requireLogin();
 
 $borrowers = LendingService::getBorrowers('', 200);
-$groups = LendingService::getGroups('', 200);
 $titles = LendingService::getTitles('', 200);
 $inventoryRows = MediaService::getInventoryReportRows();
 
@@ -21,7 +20,7 @@ ob_start();
     <div class="svws-avatar">R</div>
     <div>
         <p class="svws-title-main">Druck & Export</p>
-        <div class="svws-title-sub">Kontoauszug, Kursliste und Medienbestand</div>
+        <div class="svws-title-sub">Kontoauszug und Medienbestand</div>
     </div>
 </div>
 
@@ -57,42 +56,6 @@ ob_start();
                 <select class="svws-filter" name="mode">
                     <option value="open">Nur offene Ausleihen</option>
                     <option value="all">Komplette Historie</option>
-                </select>
-            </label>
-            <div style="display:flex; gap:8px; align-items:flex-end;">
-                <button class="svws-help-btn" type="submit">Druckansicht</button>
-                <button class="svws-help-btn" type="submit" name="format" value="csv">CSV exportieren</button>
-            </div>
-        </form>
-    </div>
-</section>
-
-<section class="svws-panel" style="margin-bottom:8px;">
-    <div class="svws-panel-header">
-        <h3>Kursliste</h3>
-    </div>
-    <div class="svws-panel-body">
-        <form method="get" action="/report_group.php" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px;">
-            <label>
-                <span class="svws-muted">Gruppe/Kurs</span><br>
-                <select class="svws-filter" name="group_id" required>
-                    <option value="">Bitte waehlen</option>
-                    <?php foreach ($groups as $group): ?>
-                        <option value="<?= (int) $group['id'] ?>">
-                            <?= htmlspecialchars((string) (($group['name'] ?: $group['kuerzel']) ?: ('ID ' . $group['svws_id']))) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </label>
-            <label>
-                <span class="svws-muted">Titel</span><br>
-                <select class="svws-filter" name="title_id" required>
-                    <option value="">Bitte waehlen</option>
-                    <?php foreach ($titles as $title): ?>
-                        <option value="<?= (int) $title['id'] ?>">
-                            <?= htmlspecialchars((string) $title['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
                 </select>
             </label>
             <div style="display:flex; gap:8px; align-items:flex-end;">

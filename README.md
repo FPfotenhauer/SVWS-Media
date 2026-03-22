@@ -8,9 +8,8 @@ Ein schlankes Medienverwaltungsprogramm fuer Schulen in NRW, orientiert am SVWS-
 - Login/Logout und lokale Benutzerverwaltung (admin/viewer)
 - Medienverwaltung mit Titel/Exemplar-Modell
 - Barcode-Ausleihe und Rueckgabe inkl. Zuordnung unbekannter Barcodes
-- Gruppenausleihe (Kurslauf) mit automatischer Verteilung
 - Ausleiherverwaltung (Memo, Sperren, Kontomigration)
-- SVWS-Synchronisation (Schueler, Lehrkraefte, Lerngruppen)
+- SVWS-Synchronisation (Schueler, Lehrkraefte)
 - Report-Hub mit Druckansichten und CSV-Exporten
 
 ## Architektur
@@ -32,12 +31,10 @@ public/
     dashboard.php
     media_list.php
     lending.php
-    group_lending.php
     borrowers.php
     reports.php
     report_media.php
     report_borrower.php
-    report_group.php
     sync_svws.php
     sync_data.php
     users.php
@@ -47,7 +44,6 @@ src/
         config.php
         database.php
     auth/
-        login.php
         user.php
     modules/
         media/
@@ -147,7 +143,6 @@ php -S 127.0.0.1:8080 -t public
 - /dashboard.php
 - /media_list.php
 - /lending.php
-- /group_lending.php
 - /borrowers.php
 - /reports.php
 - /sync_svws.php
@@ -157,18 +152,17 @@ php -S 127.0.0.1:8080 -t public
 ## Datenmodell (Kurzuebersicht)
 
 - media_titles / media_copies
-- borrowers / borrower_group_memberships
+- borrowers
 - lending
 - users
-- svws_students / svws_teachers / svws_groups
-- svws_student_groups / svws_teacher_groups
+- svws_students / svws_teachers
 - svws_sync_runs
 
 ## Aktueller Stand
 
 - Login, Rollen und User-Administration verfuegbar
 - Medien-CRUD inkl. Exemplarverwaltung aktiv
-- Lending-Flows (einzeln und Gruppe) aktiv
+- Lending-Flows (einzeln) aktiv
 - Ausleiherverwaltung inkl. Sperre/Memo/Migration aktiv
 - Report-Hub mit HTML-Druck und CSV-Export aktiv
 - SVWS-Sync und Datenansichten aktiv
@@ -191,9 +185,6 @@ Persistiert werden:
 
 - Schueler (svws_students)
 - Lehrkraefte (svws_teachers)
-- Lerngruppen (svws_groups)
-- Beziehungen Schueler <-> Lerngruppen (svws_student_groups)
-- Beziehungen Lehrer <-> Lerngruppen (svws_teacher_groups)
 
 ## Deployment
 
