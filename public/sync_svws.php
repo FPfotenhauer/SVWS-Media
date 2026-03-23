@@ -140,11 +140,6 @@ ob_start();
     </div>
 </div>
 
-<div class="svws-tabs">
-    <span class="svws-tab active">Import</span>
-    <span class="svws-tab">Status</span>
-</div>
-
 <section class="svws-panel" style="margin-bottom: 8px;">
     <div class="svws-panel-header">
         <h3>Konfiguration</h3>
