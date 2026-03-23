@@ -105,6 +105,37 @@ docker run --rm -it -p 8080:8080 -v "$PWD":/app -w /app php:8.3-cli \
   php -S 0.0.0.0:8080 -t public
 ```
 
+### Start mit Docker Compose (empfohlen)
+
+Im Projekt liegt eine fertige docker-compose.yml.
+
+Starten:
+
+```bash
+cd /pfad/zu/SVWS-Media
+docker compose up -d
+```
+
+Logs ansehen:
+
+```bash
+docker compose logs -f
+```
+
+Stoppen:
+
+```bash
+docker compose down
+```
+
+Danach im Browser:
+
+- http://127.0.0.1:8080/login.php
+
+Hinweis:
+
+- Der Compose-Service laeuft bewusst als root im Container, damit SQLite auf Linux-Bind-Mounts stabil schreiben kann.
+
 ### Erstlogin
 
 - Benutzer: Admin
@@ -135,6 +166,19 @@ export SVWS_VERIFY_TLS=false
 export SVWS_USERNAME="Admin"
 export SVWS_PASSWORD="<passwort>"
 php -S 127.0.0.1:8080 -t public
+```
+
+Mit Docker Compose koennen die gleichen Variablen z. B. ueber eine .env im Projektverzeichnis gesetzt werden:
+
+```env
+SVWS_BASE_URL=https://meineIp:8443
+SVWS_SCHEMA=svwsdb
+SVWS_ID_LERNPLATTFORM=1
+SVWS_ID_SCHULJAHRESABSCHNITT=1
+SVWS_VERIFY_TLS=false
+SVWS_USERNAME=Admin
+SVWS_PASSWORD=<passwort>
+APP_SECRET=<optional-fester-secret-key>
 ```
 
 ## Navigation / Seiten
@@ -238,6 +282,7 @@ server {
 ## Troubleshooting
 
 - Fehler "php: command not found": PHP installieren oder Docker-Start (siehe oben) nutzen.
+- Fehler "attempt to write a readonly database" mit Docker: Container mit `docker compose down` stoppen und mit der bereitgestellten Compose-Datei neu starten (`docker compose up -d`).
 - Sync liefert 401/403: Zugangsdaten, Schema und Endpunkt pruefen.
 - Frontend wirkt traege: nach grossen Syncs Browser neu laden und bei Bedarf Datenbankgroesse in data/database.sqlite pruefen.
 

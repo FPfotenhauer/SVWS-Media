@@ -36,14 +36,26 @@ if (!defined('APP_SECRET')) {
 		define('APP_SECRET', $_appSecretEnv);
 	} else {
 		$_appSecretFile = __DIR__ . '/../../data/app_secret.key';
-		if (!is_file($_appSecretFile)) {
+
+		if (is_file($_appSecretFile) && is_readable($_appSecretFile)) {
+			$_loaded = @file_get_contents($_appSecretFile);
+			if ($_loaded !== false && trim($_loaded) !== '') {
+				define('APP_SECRET', trim($_loaded));
+			}
+		}
+
+		if (!defined('APP_SECRET') && !is_file($_appSecretFile) && is_dir(DATA_PATH) && is_writable(DATA_PATH)) {
 			$_generated = bin2hex(random_bytes(32));
-			file_put_contents($_appSecretFile, $_generated);
-			chmod($_appSecretFile, 0600);
-			define('APP_SECRET', $_generated);
-		} else {
-			define('APP_SECRET', trim((string) file_get_contents($_appSecretFile)));
+			if (@file_put_contents($_appSecretFile, $_generated, LOCK_EX) !== false) {
+				@chmod($_appSecretFile, 0600);
+				define('APP_SECRET', $_generated);
+			}
+		}
+
+		if (!defined('APP_SECRET')) {
+			// Fallback without file I/O warnings (e.g. read-only or foreign-owned bind mounts).
+			define('APP_SECRET', bin2hex(random_bytes(32)));
 		}
 	}
-	unset($_appSecretEnv, $_appSecretFile, $_generated);
+	unset($_appSecretEnv, $_appSecretFile, $_generated, $_loaded);
 }
