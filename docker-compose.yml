@@ -1,0 +1,22 @@
+services:
+  svws-media:
+    image: php:8.3-cli
+    container_name: svws-media
+    working_dir: /app
+    user: "0:0"
+    command: >
+      sh -lc "php -S 0.0.0.0:8080 -t public"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app
+    environment:
+      SVWS_BASE_URL: ${SVWS_BASE_URL:-https://localhost:8443}
+      SVWS_SCHEMA: ${SVWS_SCHEMA:-}
+      SVWS_ID_LERNPLATTFORM: ${SVWS_ID_LERNPLATTFORM:-1}
+      SVWS_ID_SCHULJAHRESABSCHNITT: ${SVWS_ID_SCHULJAHRESABSCHNITT:-1}
+      SVWS_VERIFY_TLS: ${SVWS_VERIFY_TLS:-false}
+      SVWS_USERNAME: ${SVWS_USERNAME:-Admin}
+      SVWS_PASSWORD: ${SVWS_PASSWORD:-}
+      APP_SECRET: ${APP_SECRET:-}
+    restart: unless-stopped

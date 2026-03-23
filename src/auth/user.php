@@ -41,13 +41,21 @@ function csrfField(): string
         . '">';
 }
 
-function requireValidCsrfToken(): void
+function isValidCsrfTokenFromPost(): bool
 {
     ensureSessionStarted();
 
     $token = (string) ($_POST['csrf_token'] ?? '');
     $stored = (string) ($_SESSION['csrf_token'] ?? '');
-    if ($token === '' || $stored === '' || !hash_equals($stored, $token)) {
+
+    return $token !== '' && $stored !== '' && hash_equals($stored, $token);
+}
+
+function requireValidCsrfToken(): void
+{
+    if (!isValidCsrfTokenFromPost()) {
+        // Rotate token so the next form submit can recover without manual cleanup.
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         http_response_code(400);
         echo 'Ungueltiges CSRF-Token.';
         exit;

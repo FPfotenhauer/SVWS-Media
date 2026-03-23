@@ -8,9 +8,8 @@ Ein schlankes Medienverwaltungsprogramm fuer Schulen in NRW, orientiert am SVWS-
 - Login/Logout und lokale Benutzerverwaltung (admin/viewer)
 - Medienverwaltung mit Titel/Exemplar-Modell
 - Barcode-Ausleihe und Rueckgabe inkl. Zuordnung unbekannter Barcodes
-- Gruppenausleihe (Kurslauf) mit automatischer Verteilung
 - Ausleiherverwaltung (Memo, Sperren, Kontomigration)
-- SVWS-Synchronisation (Schueler, Lehrkraefte, Lerngruppen)
+- SVWS-Synchronisation (Schueler, Lehrkraefte)
 - Report-Hub mit Druckansichten und CSV-Exporten
 
 ## Architektur
@@ -32,12 +31,10 @@ public/
     dashboard.php
     media_list.php
     lending.php
-    group_lending.php
     borrowers.php
     reports.php
     report_media.php
     report_borrower.php
-    report_group.php
     sync_svws.php
     sync_data.php
     users.php
@@ -47,7 +44,6 @@ src/
         config.php
         database.php
     auth/
-        login.php
         user.php
     modules/
         media/
@@ -109,6 +105,37 @@ docker run --rm -it -p 8080:8080 -v "$PWD":/app -w /app php:8.3-cli \
   php -S 0.0.0.0:8080 -t public
 ```
 
+### Start mit Docker Compose (empfohlen)
+
+Im Projekt liegt eine fertige docker-compose.yml.
+
+Starten:
+
+```bash
+cd /pfad/zu/SVWS-Media
+docker compose up -d
+```
+
+Logs ansehen:
+
+```bash
+docker compose logs -f
+```
+
+Stoppen:
+
+```bash
+docker compose down
+```
+
+Danach im Browser:
+
+- http://127.0.0.1:8080/login.php
+
+Hinweis:
+
+- Der Compose-Service laeuft bewusst als root im Container, damit SQLite auf Linux-Bind-Mounts stabil schreiben kann.
+
 ### Erstlogin
 
 - Benutzer: Admin
@@ -141,13 +168,25 @@ export SVWS_PASSWORD="<passwort>"
 php -S 127.0.0.1:8080 -t public
 ```
 
+Mit Docker Compose koennen die gleichen Variablen z. B. ueber eine .env im Projektverzeichnis gesetzt werden:
+
+```env
+SVWS_BASE_URL=https://meineIp:8443
+SVWS_SCHEMA=svwsdb
+SVWS_ID_LERNPLATTFORM=1
+SVWS_ID_SCHULJAHRESABSCHNITT=1
+SVWS_VERIFY_TLS=false
+SVWS_USERNAME=Admin
+SVWS_PASSWORD=<passwort>
+APP_SECRET=<optional-fester-secret-key>
+```
+
 ## Navigation / Seiten
 
 - /login.php
 - /dashboard.php
 - /media_list.php
 - /lending.php
-- /group_lending.php
 - /borrowers.php
 - /reports.php
 - /sync_svws.php
@@ -157,18 +196,17 @@ php -S 127.0.0.1:8080 -t public
 ## Datenmodell (Kurzuebersicht)
 
 - media_titles / media_copies
-- borrowers / borrower_group_memberships
+- borrowers
 - lending
 - users
-- svws_students / svws_teachers / svws_groups
-- svws_student_groups / svws_teacher_groups
+- svws_students / svws_teachers
 - svws_sync_runs
 
 ## Aktueller Stand
 
 - Login, Rollen und User-Administration verfuegbar
 - Medien-CRUD inkl. Exemplarverwaltung aktiv
-- Lending-Flows (einzeln und Gruppe) aktiv
+- Lending-Flows (einzeln) aktiv
 - Ausleiherverwaltung inkl. Sperre/Memo/Migration aktiv
 - Report-Hub mit HTML-Druck und CSV-Export aktiv
 - SVWS-Sync und Datenansichten aktiv
@@ -191,9 +229,6 @@ Persistiert werden:
 
 - Schueler (svws_students)
 - Lehrkraefte (svws_teachers)
-- Lerngruppen (svws_groups)
-- Beziehungen Schueler <-> Lerngruppen (svws_student_groups)
-- Beziehungen Lehrer <-> Lerngruppen (svws_teacher_groups)
 
 ## Deployment
 
@@ -247,6 +282,7 @@ server {
 ## Troubleshooting
 
 - Fehler "php: command not found": PHP installieren oder Docker-Start (siehe oben) nutzen.
+- Fehler "attempt to write a readonly database" mit Docker: Container mit `docker compose down` stoppen und mit der bereitgestellten Compose-Datei neu starten (`docker compose up -d`).
 - Sync liefert 401/403: Zugangsdaten, Schema und Endpunkt pruefen.
 - Frontend wirkt traege: nach grossen Syncs Browser neu laden und bei Bedarf Datenbankgroesse in data/database.sqlite pruefen.
 

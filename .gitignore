@@ -4,3 +4,5 @@ data/*.sqlite
 data/*.sqlite-journal
 data/*.sqlite-wal
 data/*.sqlite-shm
+data/app_secret.key
+data/*.sqlite-shm

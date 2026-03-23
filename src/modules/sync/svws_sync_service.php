@@ -70,6 +70,8 @@ class SvwsSyncService
 
     private static function downloadGzip(string $endpoint, bool $verifyTls, string $username, string $password): string
     {
+        // Some SVWS setups require BasicAuth even when the password is intentionally empty.
+        $useBasicAuth = trim($username) !== '';
         $authHeader = 'Authorization: Basic ' . base64_encode($username . ':' . $password);
 
         if (function_exists('curl_init')) {
@@ -80,11 +82,17 @@ class SvwsSyncService
 
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 45);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/gzip, application/octet-stream', $authHeader]);
+            $headers = ['Accept: application/gzip, application/octet-stream'];
+            if ($useBasicAuth) {
+                $headers[] = $authHeader;
+            }
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifyTls);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifyTls ? 2 : 0);
-            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-            curl_setopt($ch, CURLOPT_USERPWD, $username . ':' . $password);
+            if ($useBasicAuth) {
+                curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+                curl_setopt($ch, CURLOPT_USERPWD, $username . ':' . $password);
+            }
 
             $body = curl_exec($ch);
             $statusCode = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
@@ -111,7 +119,8 @@ class SvwsSyncService
         $context = stream_context_create([
             'http' => [
                 'method' => 'GET',
-                'header' => "Accept: application/gzip, application/octet-stream\r\n" . $authHeader . "\r\n",
+                'header' => "Accept: application/gzip, application/octet-stream\r\n"
+                    . ($useBasicAuth ? ($authHeader . "\r\n") : ''),
                 'timeout' => 45,
             ],
             'ssl' => [
@@ -159,6 +168,7 @@ class SvwsSyncService
     private static function normalizePayload(array $payload): array
     {
         $students = self::extractList($payload, ['schueler', 'schuelerListe', 'students']);
+        $classes = self::extractList($payload, ['Klassen', 'klassen', 'classes']);
         $teachers = self::extractList($payload, ['lehrer', 'lehrkraefte', 'lehrkraefteListe', 'teachers']);
         $groups = self::extractList($payload, ['lerngruppen', 'kurse', 'gruppen', 'groups']);
 
@@ -175,18 +185,54 @@ class SvwsSyncService
             $teacherGroupMap = self::extractTeacherGroupMapFromGroups($groups);
         }
 
+        $schoolMeta = self::extractSchoolMeta($payload);
+
         return [
             'students' => $students,
+            'classes' => $classes,
             'teachers' => $teachers,
             'groups' => $groups,
             'studentGroupMap' => $studentGroupMap,
             'teacherGroupMap' => $teacherGroupMap,
+            'schoolMeta' => $schoolMeta,
         ];
+    }
+
+    private static function extractSchoolMeta(array $payload): array
+    {
+        // SVWS may nest school data under a 'schule' key or provide it at root level.
+        $root = isset($payload['schule']) && is_array($payload['schule']) ? $payload['schule'] : $payload;
+
+        $schulname = self::firstValue($root, ['schulbezeichnung', 'schulname', 'bezeichnungSchule', 'nameSchule', 'name', 'schulbezeichnung1']);
+        $schulnummer = self::firstValue($root, ['schulnummer', 'snr', 'schulNummer', 'schuldatennummer']);
+        $ort = self::firstValue($root, ['ort', 'ortsname', 'ort1', 'city']);
+        $plz = self::firstValue($root, ['plz', 'postleitzahl', 'zip']);
+        $mailadresse = self::firstValue($root, ['mailadresse', 'email', 'emailSchule', 'mail']);
+
+        return [
+            'schulname'   => is_string($schulname) ? $schulname : null,
+            'schulnummer' => is_string($schulnummer) || is_int($schulnummer) ? (string) $schulnummer : null,
+            'ort'         => is_string($ort) ? $ort : null,
+            'plz'         => is_string($plz) ? $plz : null,
+            'mailadresse' => is_string($mailadresse) ? $mailadresse : null,
+        ];
+    }
+
+    private static function firstValue(array $data, array $keys): mixed
+    {
+        foreach ($keys as $key) {
+            if (isset($data[$key]) && $data[$key] !== '' && $data[$key] !== null) {
+                return $data[$key];
+            }
+        }
+
+        return null;
     }
 
     private static function persistData(PDO $db, array $data): array
     {
         $students = $data['students'];
+        $classLookup = self::buildClassLookup($data['classes'] ?? []);
         $teachers = $data['teachers'];
         $groups = $data['groups'];
 
@@ -194,10 +240,11 @@ class SvwsSyncService
 
         $db->beginTransaction();
         try {
-            self::syncStudents($db, $students, $now);
+            self::syncStudents($db, $students, $classLookup, $now);
             self::syncTeachers($db, $teachers, $now);
             self::syncGroups($db, $groups, $now);
             self::syncRelations($db, $data['studentGroupMap'], $data['teacherGroupMap']);
+            self::syncSchoolMeta($db, $data['schoolMeta'], $now);
             refreshBorrowersFromSvwsData($db);
             $db->commit();
         } catch (Throwable $e) {
@@ -214,7 +261,49 @@ class SvwsSyncService
         ];
     }
 
-    private static function syncStudents(PDO $db, array $items, string $now): void
+    private static function syncSchoolMeta(PDO $db, array $meta, string $now): void
+    {
+        // Only non-null fields overwrite existing values so a partial payload doesn't blank out known data.
+        $existing = $db->query('SELECT * FROM svws_school_meta WHERE id = 1')->fetch();
+
+        if ($existing === false) {
+            $stmt = $db->prepare(
+                'INSERT INTO svws_school_meta (id, schulname, schulnummer, ort, plz, mailadresse, updated_at)
+                 VALUES (1, :schulname, :schulnummer, :ort, :plz, :mailadresse, :updated_at)'
+            );
+            $stmt->execute([
+                'schulname'   => $meta['schulname'],
+                'schulnummer' => $meta['schulnummer'],
+                'ort'         => $meta['ort'],
+                'plz'         => $meta['plz'],
+                'mailadresse' => $meta['mailadresse'],
+                'updated_at'  => $now,
+            ]);
+
+            return;
+        }
+
+        $stmt = $db->prepare(
+            'UPDATE svws_school_meta SET
+                schulname   = COALESCE(:schulname,   schulname),
+                schulnummer = COALESCE(:schulnummer, schulnummer),
+                ort         = COALESCE(:ort,         ort),
+                plz         = COALESCE(:plz,         plz),
+                mailadresse = COALESCE(:mailadresse, mailadresse),
+                updated_at  = :updated_at
+             WHERE id = 1'
+        );
+        $stmt->execute([
+            'schulname'   => $meta['schulname'],
+            'schulnummer' => $meta['schulnummer'],
+            'ort'         => $meta['ort'],
+            'plz'         => $meta['plz'],
+            'mailadresse' => $meta['mailadresse'],
+            'updated_at'  => $now,
+        ]);
+    }
+
+    private static function syncStudents(PDO $db, array $items, array $classLookup, string $now): void
     {
         $ids = [];
         $stmt = $db->prepare(
@@ -244,13 +333,19 @@ class SvwsSyncService
 
             $vorname = self::pickString($item, ['vorname', 'rufname']);
             $nachname = self::pickString($item, ['nachname']);
+            $classFromLookup = '';
+            $classId = self::extractId($item, ['idKlasse', 'klasseId', 'id_klasse']);
+            if ($classId !== null) {
+                $classFromLookup = $classLookup[$classId] ?? '';
+            }
+            $klasse = $classFromLookup !== '' ? $classFromLookup : self::extractStudentClass($item);
 
             $stmt->execute([
                 'svws_id' => $svwsId,
                 'nachname' => $nachname,
                 'vorname' => $vorname,
                 'anzeige_name' => trim($nachname . ', ' . $vorname, ' ,'),
-                'klasse' => self::pickString($item, ['klasse', 'klassenbezeichnung', 'lerngruppe']),
+                'klasse' => $klasse,
                 'status' => self::pickString($item, ['status']),
                 'email' => self::pickString($item, ['email', 'eMailAdresse']),
                 'raw_json' => json_encode($item, JSON_UNESCAPED_UNICODE),
@@ -259,6 +354,82 @@ class SvwsSyncService
         }
 
         self::deleteMissing($db, 'svws_students', $ids);
+    }
+
+    private static function extractStudentClass(array $item): string
+    {
+        $direct = self::pickString($item, [
+            'klasse',
+            'klassenbezeichnung',
+            'klasseKuerzel',
+            'bezeichnungKlasse',
+            'lerngruppe',
+        ]);
+        if ($direct !== '') {
+            return $direct;
+        }
+
+        // Some payload variants nest class information as an object.
+        if (isset($item['klasse']) && is_array($item['klasse'])) {
+            $nested = self::pickString($item['klasse'], ['kuerzel', 'bezeichnung', 'name', 'anzeige']);
+            if ($nested !== '') {
+                return $nested;
+            }
+        }
+
+        // Some payloads expose class references as list-like structures.
+        foreach (['klassen', 'lerngruppen'] as $listKey) {
+            if (!isset($item[$listKey]) || !is_array($item[$listKey])) {
+                continue;
+            }
+
+            foreach ($item[$listKey] as $classRef) {
+                if (is_array($classRef)) {
+                    $fromRef = self::pickString($classRef, ['kuerzel', 'bezeichnung', 'name', 'anzeige']);
+                    if ($fromRef !== '') {
+                        return $fromRef;
+                    }
+                } elseif (is_scalar($classRef)) {
+                    $fromScalar = trim((string) $classRef);
+                    if ($fromScalar !== '') {
+                        return $fromScalar;
+                    }
+                }
+            }
+        }
+
+        return '';
+    }
+
+    private static function buildClassLookup(array $classes): array
+    {
+        $lookup = [];
+
+        foreach ($classes as $classItem) {
+            if (!is_array($classItem)) {
+                continue;
+            }
+
+            $id = self::extractId($classItem, ['id', 'idKlasse', 'klasseId', 'id_klasse']);
+            if ($id === null) {
+                continue;
+            }
+
+            $label = self::pickString($classItem, [
+                'kuerzel',
+                'bezeichnung',
+                'anzeigename',
+                'name',
+                'klassenbezeichnung',
+            ]);
+            if ($label === '') {
+                continue;
+            }
+
+            $lookup[$id] = $label;
+        }
+
+        return $lookup;
     }
 
     private static function syncTeachers(PDO $db, array $items, string $now): void

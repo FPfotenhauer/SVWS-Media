@@ -14,19 +14,21 @@ $errorMessage = '';
 $username = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    requireValidCsrfToken();
+    if (!isValidCsrfTokenFromPost()) {
+        $errorMessage = 'Sitzung abgelaufen. Bitte Formular erneut senden.';
+    } else {
+        $username = trim((string) ($_POST['username'] ?? ''));
+        $password = (string) ($_POST['password'] ?? '');
 
-    $username = trim((string) ($_POST['username'] ?? ''));
-    $password = (string) ($_POST['password'] ?? '');
+        if (authenticateUser($username, $password)) {
+            header('Location: /dashboard.php');
+            exit;
+        }
 
-    if (authenticateUser($username, $password)) {
-        header('Location: /dashboard.php');
-        exit;
-    }
-
-    $errorMessage = getAndClearLastLoginError();
-    if ($errorMessage === '') {
-        $errorMessage = 'Ungueltiger Benutzername oder Passwort.';
+        $errorMessage = getAndClearLastLoginError();
+        if ($errorMessage === '') {
+            $errorMessage = 'Ungueltiger Benutzername oder Passwort.';
+        }
     }
 }
 ?>

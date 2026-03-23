@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../src/config/config.php';
 require_once __DIR__ . '/../src/auth/user.php';
 $currentUser = getCurrentUser();
+$isDashboardPage = mb_strtolower((string) ($pageTitle ?? '')) === 'dashboard';
 ?><!DOCTYPE html>
 <html lang="de">
 <head>
@@ -133,6 +134,11 @@ $currentUser = getCurrentUser();
             font-size: 14px;
             font-weight: 700;
             letter-spacing: 0.1px;
+        }
+
+        .svws-topbar h1.svws-topbar-title-dashboard {
+            font-size: 34px;
+            line-height: 1;
         }
 
         .svws-top-meta {
@@ -373,6 +379,92 @@ $currentUser = getCurrentUser();
             margin-top: 2px;
         }
 
+        .svws-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
+        }
+
+        .svws-nav-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            text-decoration: none;
+            color: inherit;
+            background: #fff;
+            border: 2px solid #2f6fae;
+            border-radius: 12px;
+            min-height: 164px;
+            padding: 18px;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+        }
+
+        .svws-nav-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 14px rgba(0, 0, 0, 0.1);
+            border-color: #1f5588;
+        }
+
+        .svws-nav-card-icon {
+            flex: 0 0 46px;
+            width: 46px;
+            height: 46px;
+            border-radius: 10px;
+            background: #e9f2fb;
+            border: 1px solid #b9d2eb;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #1f5f95;
+        }
+
+        .svws-nav-card-icon i {
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        .svws-nav-card-body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .svws-nav-card-title {
+            font-size: 17px;
+            font-weight: 700;
+            margin: 2px 0 8px;
+        }
+
+        .svws-nav-card-text {
+            color: var(--muted);
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        @media (max-width: 780px) {
+            .svws-card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .svws-nav-card {
+                min-height: 150px;
+                padding: 16px;
+            }
+        }
+
+        .svws-school-meta-title {
+            margin: 2px 0 14px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a3a5c;
+        }
+
+        .svws-school-meta-details {
+            font-weight: 400;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
         .svws-list {
             width: 100%;
             border-collapse: collapse;
@@ -405,6 +497,10 @@ $currentUser = getCurrentUser();
             .svws-content-header {
                 grid-template-columns: 1fr;
             }
+
+            .svws-topbar h1.svws-topbar-title-dashboard {
+                font-size: 26px;
+            }
         }
     </style>
 </head>
@@ -429,17 +525,13 @@ $currentUser = getCurrentUser();
                 <i class="ri-exchange-line svws-nav-icon" aria-hidden="true"></i>
                 <span class="svws-nav-label">Leihe</span>
             </a>
-            <a class="<?= $activeNav === 'classes' ? 'active' : '' ?>" href="/borrowers.php">
-                <i class="ri-group-line svws-nav-icon" aria-hidden="true"></i>
-                <span class="svws-nav-label">Klassen</span>
-            </a>
-            <a class="<?= $activeNav === 'courses' ? 'active' : '' ?>" href="/group_lending.php">
-                <i class="ri-archive-stack-line svws-nav-icon" aria-hidden="true"></i>
-                <span class="svws-nav-label">Kurse</span>
-            </a>
             <a class="<?= $activeNav === 'sync' ? 'active' : '' ?>" href="/sync_svws.php">
                 <i class="ri-arrow-left-right-line svws-nav-icon" aria-hidden="true"></i>
                 <span class="svws-nav-label">Sync</span>
+            </a>
+            <a class="<?= $activeNav === 'reports' ? 'active' : '' ?>" href="/reports.php">
+                <i class="ri-printer-line svws-nav-icon" aria-hidden="true"></i>
+                <span class="svws-nav-label">Druck</span>
             </a>
         </nav>
         <div class="svws-spacer"></div>
@@ -458,7 +550,7 @@ $currentUser = getCurrentUser();
     <div class="svws-workspace">
         <header class="svws-topbar">
             <div>
-                <h1><?= htmlspecialchars($pageTitle) ?></h1>
+                <h1 class="<?= $isDashboardPage ? 'svws-topbar-title-dashboard' : '' ?>"><?= htmlspecialchars($pageTitle) ?></h1>
                 <div class="svws-top-meta">
                     <?= htmlspecialchars($currentUser['username'] ?? 'Gast') ?> | <?= htmlspecialchars($currentUser['role'] ?? 'viewer') ?>
                 </div>

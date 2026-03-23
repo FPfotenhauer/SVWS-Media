@@ -171,6 +171,33 @@ function ensureLibraryDomainSchema(PDO $db): void
     ensureColumnExists($db, 'lending', 'kurs_lehrer_snapshot', 'TEXT');
     ensureColumnExists($db, 'lending', 'created_by_user_id', 'INTEGER');
 
+    $db->exec(
+        'CREATE TABLE IF NOT EXISTS svws_school_meta (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            schulname TEXT,
+            schulnummer TEXT,
+            ort TEXT,
+            plz TEXT,
+            updated_at TEXT
+        )'
+    );
+
+    $db->exec(
+        'CREATE TABLE IF NOT EXISTS svws_sync_config (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            base_url TEXT,
+            schema TEXT,
+            id_lernplattform INTEGER,
+            id_schuljahresabschnitt INTEGER,
+            verify_tls INTEGER NOT NULL DEFAULT 1,
+            username TEXT,
+            updated_at TEXT
+        )'
+    );
+
+    ensureColumnExists($db, 'svws_sync_config', 'password_enc', 'TEXT');
+    ensureColumnExists($db, 'svws_school_meta', 'mailadresse', 'TEXT');
+
     $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_media_copies_barcode_unique ON media_copies(barcode)');
     $db->exec('CREATE INDEX IF NOT EXISTS idx_media_copies_title_id ON media_copies(title_id)');
     $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_borrowers_kind_svws_id_unique ON borrowers(kind, svws_id)');
@@ -182,6 +209,41 @@ function ensureLibraryDomainSchema(PDO $db): void
     backfillLegacyMediaToTitlesAndCopies($db);
     backfillBorrowersFromLegacyUsers($db);
     backfillLegacyLending($db);
+}
+
+/**
+ * Encrypt a plaintext value with AES-256-CBC using APP_SECRET.
+ * Returns a base64-encoded string of IV + ciphertext.
+ */
+function encryptAppValue(string $plaintext): string
+{
+    $key = hash('sha256', APP_SECRET, true);
+    $iv = random_bytes(16);
+    $ciphertext = openssl_encrypt($plaintext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+    if ($ciphertext === false) {
+        throw new RuntimeException('Verschl\u00fcsselung fehlgeschlagen.');
+    }
+
+    return base64_encode($iv . $ciphertext);
+}
+
+/**
+ * Decrypt a value previously encrypted with encryptAppValue().
+ * Returns empty string on any failure.
+ */
+function decryptAppValue(string $encoded): string
+{
+    $key = hash('sha256', APP_SECRET, true);
+    $data = base64_decode($encoded, true);
+    if ($data === false || strlen($data) < 17) {
+        return '';
+    }
+
+    $iv = substr($data, 0, 16);
+    $ciphertext = substr($data, 16);
+    $plaintext = openssl_decrypt($ciphertext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+
+    return $plaintext === false ? '' : $plaintext;
 }
 
 function ensureColumnExists(PDO $db, string $table, string $column, string $definition): void
