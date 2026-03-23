@@ -155,6 +155,73 @@ $isDashboardPage = mb_strtolower((string) ($pageTitle ?? '')) === 'dashboard';
             line-height: 1.2;
         }
 
+        .svws-btn-modern {
+            border: 1px solid #8ea5bc;
+            border-radius: 6px;
+            padding: 5px 10px;
+            background: linear-gradient(180deg, #ffffff 0%, #f1f6fb 100%);
+            color: #1a3f63;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.2;
+            transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+        }
+
+        .svws-btn-modern:hover {
+            border-color: #6f8eac;
+            background: linear-gradient(180deg, #fdfefe 0%, #e8f1f9 100%);
+            color: #123b61;
+            cursor: pointer;
+        }
+
+        .svws-btn-modern:active {
+            background: #deebf7;
+        }
+
+        .svws-action-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .svws-icon-btn {
+            width: 26px;
+            height: 26px;
+            padding: 0;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #8ea5bc;
+            background: linear-gradient(180deg, #ffffff 0%, #f1f6fb 100%);
+            color: #1b476f;
+        }
+
+        .svws-icon-btn i {
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .svws-icon-btn.svws-icon-btn-warning {
+            border-color: #c6995d;
+            color: #7a4c0c;
+            background: linear-gradient(180deg, #fff9f1 0%, #f7e9d6 100%);
+        }
+
+        .svws-icon-btn.svws-icon-btn-danger {
+            border-color: #c08b8b;
+            color: #7a1f1f;
+            background: linear-gradient(180deg, #fff5f5 0%, #f7dfdf 100%);
+        }
+
+        .svws-icon-btn:hover {
+            border-color: #6f8eac;
+            background: linear-gradient(180deg, #fdfefe 0%, #e8f1f9 100%);
+            cursor: pointer;
+        }
+
         .svws-main {
             margin-top: 6px;
             background: var(--panel);

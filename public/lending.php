@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = LendingService::returnByBarcode((string) ($_POST['barcode'] ?? ''), $actorUserId);
             $unknownBarcode = '';
             $flashType = 'success';
-            $flashMessage = 'Rueckgabe verbucht (ID ' . (int) ($result['lending_id'] ?? 0) . ').';
+            $flashMessage = 'Rückgabe verbucht (ID ' . (int) ($result['lending_id'] ?? 0) . ').';
         }
     } catch (Throwable $e) {
         $flashType = 'error';
@@ -112,7 +112,7 @@ ob_start();
         <div class="svws-panel-body">
             <form method="get" style="display:flex; gap:6px; margin-bottom:8px; align-items:center;">
                 <input class="svws-search" type="search" name="borrower_q" value="<?= htmlspecialchars($borrowerSearch) ?>" placeholder="Name/Klasse suchen">
-                <button class="svws-help-btn" type="submit">Suchen</button>
+                <button class="svws-help-btn svws-btn-modern" type="submit">Suchen</button>
             </form>
 
             <table class="svws-list">
@@ -158,8 +158,8 @@ ob_start();
             <div class="svws-content-header">
                 <div class="svws-avatar">L</div>
                 <div>
-                    <p class="svws-title-main">Ausleihe & Rueckgabe</p>
-                    <div class="svws-title-sub">Barcode-Scan mit Rueckgabe oder Ausgabe</div>
+                    <p class="svws-title-main">Ausleihe & Rückgabe</p>
+                    <div class="svws-title-sub">Barcode-Scan mit Rückgabe oder Ausgabe</div>
                 </div>
             </div>
 
@@ -170,7 +170,7 @@ ob_start();
             <?php endif; ?>
 
             <?php if ($selectedBorrower === null): ?>
-                <p class="svws-muted">Bitte links einen Ausleiher auswaehlen.</p>
+                <p class="svws-muted">Bitte links einen Ausleiher auswählen.</p>
             <?php else: ?>
                 <?php
                 $selectedBorrowerName = trim((string) ($selectedBorrower['display_name'] ?? ''));
@@ -212,7 +212,7 @@ ob_start();
                         <input class="svws-search" type="text" name="kurs_lehrer">
                     </label>
                     <div>
-                        <button class="svws-help-btn" type="submit">Scan verarbeiten</button>
+                        <button class="svws-help-btn svws-btn-modern" type="submit">Scan verarbeiten</button>
                     </div>
                 </form>
 
@@ -221,8 +221,8 @@ ob_start();
                     <input type="hidden" name="action" value="return">
                     <input type="hidden" name="borrower_q" value="<?= htmlspecialchars($borrowerSearch) ?>">
                     <input type="hidden" name="borrower_id" value="<?= (int) $selectedBorrowerId ?>">
-                    <input class="svws-search" type="text" name="barcode" placeholder="Barcode fuer direkte Rueckgabe" required>
-                    <button class="svws-help-btn" type="submit">Direkte Rueckgabe</button>
+                    <input class="svws-search" type="text" name="barcode" placeholder="Barcode für direkte Rückgabe" required>
+                    <button class="svws-help-btn svws-btn-modern" type="submit">Direkte Rückgabe</button>
                 </form>
 
                 <?php if ($unknownBarcode !== ''): ?>
@@ -246,7 +246,7 @@ ob_start();
                                 <label>
                                     <span class="svws-muted">Titel</span><br>
                                     <select class="svws-filter" name="title_id" required>
-                                        <option value="">Bitte waehlen</option>
+                                        <option value="">Bitte wählen</option>
                                         <?php foreach ($titles as $title): ?>
                                             <option value="<?= (int) $title['id'] ?>">
                                                 <?= htmlspecialchars((string) $title['name']) ?>
@@ -267,7 +267,7 @@ ob_start();
                                     <input class="svws-search" type="text" name="memo">
                                 </label>
                                 <div>
-                                    <button class="svws-help-btn" type="submit">Zuordnen und ausleihen</button>
+                                    <button class="svws-help-btn svws-btn-modern" type="submit">Zuordnen und ausleihen</button>
                                 </div>
                             </form>
                         </div>

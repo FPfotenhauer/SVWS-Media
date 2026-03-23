@@ -102,7 +102,7 @@ ob_start();
                 </select>
             </label>
             <div style="grid-column:1 / -1;">
-                <button class="svws-help-btn" type="submit">Benutzer speichern</button>
+                <button class="svws-help-btn svws-btn-modern" type="submit">Benutzer speichern</button>
             </div>
         </form>
 
@@ -132,7 +132,7 @@ ob_start();
                 <input class="svws-search" type="password" name="new_password" required>
             </label>
             <div style="grid-column:1 / -1;">
-                <button class="svws-help-btn" type="submit">Passwort speichern</button>
+                <button class="svws-help-btn svws-btn-modern" type="submit">Passwort speichern</button>
             </div>
         </form>
     </div>
@@ -167,13 +167,13 @@ ob_start();
                                 <input type="hidden" name="action" value="toggle_active">
                                 <input type="hidden" name="target_user_id" value="<?= htmlspecialchars((string) $user['id']) ?>">
                                 <input type="hidden" name="new_active" value="<?= (int) ($user['is_active'] ?? 0) === 1 ? '0' : '1' ?>">
-                                <button class="svws-help-btn" type="submit"><?= (int) ($user['is_active'] ?? 0) === 1 ? 'Deaktivieren' : 'Aktivieren' ?></button>
+                                <button class="svws-help-btn svws-btn-modern" type="submit"><?= (int) ($user['is_active'] ?? 0) === 1 ? 'Deaktivieren' : 'Aktivieren' ?></button>
                             </form>
                             <form method="post" style="display:inline-block;">
                                 <?= csrfField() ?>
                                 <input type="hidden" name="action" value="delete_user">
                                 <input type="hidden" name="target_user_id" value="<?= htmlspecialchars((string) $user['id']) ?>">
-                                <button class="svws-help-btn" type="submit">Loeschen</button>
+                                <button class="svws-help-btn svws-btn-modern" type="submit">Loeschen</button>
                             </form>
                         <?php else: ?>
                             <span class="svws-muted">Eigenes Konto</span>

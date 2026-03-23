@@ -185,29 +185,14 @@ ob_start();
 .svws-action-btn {
     text-decoration: none;
     display: inline-block;
-    color: #222;
-    background: linear-gradient(180deg, #fafafa 0%, #efefef 100%);
-    border: 1px solid #b7b7b7;
-    border-radius: 8px;
-    padding: 3px 10px;
-    font-size: 10px;
-    font-weight: 600;
-    line-height: 1.2;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-    transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    color: inherit;
 }
 
 .svws-action-btn:visited,
 .svws-action-btn:hover,
 .svws-action-btn:active {
-    color: #222;
+    color: inherit;
     text-decoration: none;
-}
-
-.svws-action-btn:hover {
-    background: linear-gradient(180deg, #ffffff 0%, #ececec 100%);
-    border-color: #9e9e9e;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 </style>
 <div class="svws-content-header">
@@ -255,7 +240,7 @@ ob_start();
             <input type="hidden" name="dir" value="<?= htmlspecialchars($dir) ?>">
             <input type="hidden" name="page" value="1">
             <input class="svws-search" type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Suche">
-            <button class="svws-help-btn" type="submit">Filtern</button>
+            <button class="svws-help-btn svws-btn-modern" type="submit">Filtern</button>
             <label class="svws-muted" style="display:inline-flex; align-items:center; gap:4px; margin-left:8px;">
                 Pro Seite
                 <select class="svws-search" name="per_page" style="width:auto;">
@@ -264,7 +249,7 @@ ob_start();
                     <?php endforeach; ?>
                 </select>
             </label>
-            <a class="svws-help-btn" href="/sync_svws.php" style="text-decoration:none;display:inline-block;">Neu synchronisieren</a>
+            <a class="svws-help-btn svws-btn-modern" href="/sync_svws.php" style="text-decoration:none;display:inline-block;">Neu synchronisieren</a>
         </form>
 
         <?php if ($tab === 'students'): ?>
@@ -291,7 +276,7 @@ ob_start();
                         <td><?= htmlspecialchars((string) ($row['status'] ?? '')) ?></td>
                         <td class="svws-table-action">
                             <?php if ($borrowerUrl !== ''): ?>
-                                <a class="svws-help-btn svws-action-btn" href="<?= htmlspecialchars($borrowerUrl) ?>">Zur Ausleihe</a>
+                                <a class="svws-help-btn svws-btn-modern svws-action-btn" href="<?= htmlspecialchars($borrowerUrl) ?>">Zur Ausleihe</a>
                             <?php else: ?>
                                 <span class="svws-muted">-</span>
                             <?php endif; ?>
@@ -330,7 +315,7 @@ ob_start();
                         <td><?= htmlspecialchars((string) ($row['email'] ?? '')) ?></td>
                         <td class="svws-table-action">
                             <?php if ($borrowerUrl !== ''): ?>
-                                <a class="svws-help-btn svws-action-btn" href="<?= htmlspecialchars($borrowerUrl) ?>">Zur Ausleihe</a>
+                                <a class="svws-help-btn svws-btn-modern svws-action-btn" href="<?= htmlspecialchars($borrowerUrl) ?>">Zur Ausleihe</a>
                             <?php else: ?>
                                 <span class="svws-muted">-</span>
                             <?php endif; ?>
@@ -348,12 +333,12 @@ ob_start();
         <div class="svws-pagination">
             <span class="svws-muted">Seite <?= $page ?> von <?= $totalPages ?> (<?= $totalRows ?> Einträge)</span>
             <?php if ($page > 1): ?>
-                <a class="svws-help-btn" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => 1])) ?>">« Erste</a>
-                <a class="svws-help-btn" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $page - 1])) ?>">‹ Zurück</a>
+                <a class="svws-help-btn svws-btn-modern" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => 1])) ?>">« Erste</a>
+                <a class="svws-help-btn svws-btn-modern" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $page - 1])) ?>">‹ Zurück</a>
             <?php endif; ?>
             <?php if ($page < $totalPages): ?>
-                <a class="svws-help-btn" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $page + 1])) ?>">Weiter ›</a>
-                <a class="svws-help-btn" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $totalPages])) ?>">Letzte »</a>
+                <a class="svws-help-btn svws-btn-modern" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $page + 1])) ?>">Weiter ›</a>
+                <a class="svws-help-btn svws-btn-modern" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $totalPages])) ?>">Letzte »</a>
             <?php endif; ?>
         </div>
 

@@ -107,14 +107,14 @@ ob_start();
                 <input class="svws-search" type="text" name="title" placeholder="Neuer Titel" required>
                 <input class="svws-search" type="text" name="type" placeholder="Typ (optional)">
                 <input class="svws-search" type="text" name="location" placeholder="Standort (optional)">
-                <button class="svws-help-btn" type="submit">Titel anlegen</button>
+                <button class="svws-help-btn svws-btn-modern" type="submit">Titel anlegen</button>
             </form>
 
             <div style="margin:10px 0 8px; padding-top:8px; border-top:2px solid #c5d8ec;">
                 <p class="svws-muted" style="margin:0 0 6px; font-weight:600;">Titel suchen</p>
                 <form method="get" style="display:flex; gap:6px; align-items:center;">
                     <input class="svws-search" type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Titel suchen">
-                    <button class="svws-help-btn" type="submit">Suchen</button>
+                    <button class="svws-help-btn svws-btn-modern" type="submit">Suchen</button>
                 </form>
             </div>
 
@@ -174,7 +174,6 @@ ob_start();
                 <h3 style="margin-bottom: 6px;">Titel bearbeiten</h3>
                 <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px; margin-bottom:8px;">
                     <?= csrfField() ?>
-                    <input type="hidden" name="action" value="update_title">
                     <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
                     <label>
                         <span class="svws-muted">Titel</span><br>
@@ -189,15 +188,15 @@ ob_start();
                         <input class="svws-search" type="text" name="location" value="<?= htmlspecialchars((string) ($selectedTitle['location'] ?? '')) ?>">
                     </label>
                     <div style="display:flex; align-items:flex-end; gap:6px;">
-                        <button class="svws-help-btn" type="submit">Titel speichern</button>
+                        <button class="svws-help-btn svws-btn-modern" type="submit" name="action" value="update_title">Titel speichern</button>
+                        <button
+                            class="svws-help-btn svws-btn-modern"
+                            type="submit"
+                            name="action"
+                            value="delete_title"
+                            onclick="return confirm('Titel wirklich löschen?');"
+                        >Titel löschen</button>
                     </div>
-                </form>
-
-                <form method="post" onsubmit="return confirm('Titel wirklich loeschen?');" style="margin-bottom:10px;">
-                    <?= csrfField() ?>
-                    <input type="hidden" name="action" value="delete_title">
-                    <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
-                    <button class="svws-help-btn" type="submit">Titel loeschen</button>
                 </form>
 
                 <h3 style="margin-bottom: 6px;">Exemplar anlegen</h3>
@@ -222,7 +221,7 @@ ob_start();
                         <input class="svws-search" type="text" name="memo">
                     </label>
                     <div>
-                        <button class="svws-help-btn" type="submit">Exemplar anlegen</button>
+                        <button class="svws-help-btn svws-btn-modern" type="submit">Exemplar anlegen</button>
                     </div>
                 </form>
 
@@ -270,10 +269,13 @@ ob_start();
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <button class="svws-help-btn" type="submit">Speichern</button>
+                                    <div class="svws-action-buttons">
+                                        <button class="svws-help-btn svws-icon-btn" type="submit" title="Speichern" aria-label="Speichern">
+                                            <i class="ri-save-line" aria-hidden="true"></i>
+                                        </button>
                                     </form>
 
-                                    <form method="post" style="display:inline-block; margin-top:4px;">
+                                    <form method="post" style="display:inline-block; margin:0;">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="action" value="update_copy">
                                         <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
@@ -283,16 +285,26 @@ ob_start();
                                         <input type="hidden" name="condition" value="<?= htmlspecialchars((string) ($copy['condition'] ?? '')) ?>">
                                         <input type="hidden" name="memo" value="<?= htmlspecialchars((string) ($copy['memo'] ?? '')) ?>">
                                         <input type="hidden" name="is_active" value="<?= (int) $copy['is_active'] === 1 ? '0' : '1' ?>">
-                                        <button class="svws-help-btn" type="submit"><?= (int) $copy['is_active'] === 1 ? 'Deaktivieren' : 'Aktivieren' ?></button>
+                                        <button
+                                            class="svws-help-btn svws-icon-btn svws-icon-btn-warning"
+                                            type="submit"
+                                            title="<?= (int) $copy['is_active'] === 1 ? 'Deaktivieren' : 'Aktivieren' ?>"
+                                            aria-label="<?= (int) $copy['is_active'] === 1 ? 'Deaktivieren' : 'Aktivieren' ?>"
+                                        >
+                                            <i class="<?= (int) $copy['is_active'] === 1 ? 'ri-toggle-line' : 'ri-toggle-fill' ?>" aria-hidden="true"></i>
+                                        </button>
                                     </form>
 
-                                    <form method="post" style="display:inline-block; margin-top:4px;" onsubmit="return confirm('Exemplar wirklich loeschen?');">
+                                    <form method="post" style="display:inline-block; margin:0;" onsubmit="return confirm('Exemplar wirklich löschen?');">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="action" value="delete_copy">
                                         <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
                                         <input type="hidden" name="copy_id" value="<?= (int) $copy['id'] ?>">
-                                        <button class="svws-help-btn" type="submit">Loeschen</button>
+                                        <button class="svws-help-btn svws-icon-btn svws-icon-btn-danger" type="submit" title="Löschen" aria-label="Löschen">
+                                            <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                                        </button>
                                     </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

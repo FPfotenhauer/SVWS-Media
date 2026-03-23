@@ -185,7 +185,7 @@ ob_start();
                 <input type="checkbox" name="verifyTls" value="1" <?= $verifyTls ? 'checked' : '' ?>> TLS-Zertifikat pruefen
             </label>
             <div style="grid-column:1 / -1;">
-                <button class="svws-help-btn" type="submit">Synchronisation starten</button>
+                <button class="svws-help-btn svws-btn-modern" type="submit">Synchronisation starten</button>
             </div>
         </form>
 
@@ -291,7 +291,7 @@ ob_start();
                 <input class="svws-search" type="email" name="mailadresse" value="<?= htmlspecialchars((string) ($schoolMeta['mailadresse'] ?? '')) ?>">
             </label>
             <div style="grid-column:1 / -1;">
-                <button class="svws-help-btn" type="submit">Schuldaten speichern</button>
+                <button class="svws-help-btn svws-btn-modern" type="submit">Schuldaten speichern</button>
             </div>
         </form>
     </div>
