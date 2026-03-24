@@ -19,4 +19,4 @@ services:
       SVWS_USERNAME: ${SVWS_USERNAME:-Admin}
       SVWS_PASSWORD: ${SVWS_PASSWORD:-}
       APP_SECRET: ${APP_SECRET:-}
-    restart: unless-stopped
+    restart: no #unless-stopped
