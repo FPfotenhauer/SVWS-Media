@@ -183,6 +183,18 @@ function ensureLibraryDomainSchema(PDO $db): void
     );
 
     $db->exec(
+        'CREATE TABLE IF NOT EXISTS svws_classes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            svws_id INTEGER NOT NULL UNIQUE,
+            kuerzel TEXT,
+            name TEXT,
+            jahrgang TEXT,
+            raw_json TEXT,
+            updated_at TEXT NOT NULL
+        )'
+    );
+
+    $db->exec(
         'CREATE TABLE IF NOT EXISTS svws_sync_config (
             id INTEGER PRIMARY KEY CHECK (id = 1),
             base_url TEXT,

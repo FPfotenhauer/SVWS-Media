@@ -47,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         input { width: 100%; box-sizing: border-box; border: 1px solid #afafaf; border-radius: 4px; height: 34px; padding: 6px 8px; margin-top: 4px; }
         button { margin-top: 10px; border: 1px solid #9f9f9f; border-radius: 16px; background: #fff; padding: 6px 14px; cursor: pointer; }
         .error { margin-top: 10px; color: #980000; font-size: 12px; }
-        .hint { margin-top: 12px; color: #666; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -69,7 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($errorMessage !== ''): ?>
             <div class="error"><?= htmlspecialchars($errorMessage) ?></div>
         <?php endif; ?>
-        <div class="hint">Default: Admin / admin</div>
     </div>
 </div>
 </body>
