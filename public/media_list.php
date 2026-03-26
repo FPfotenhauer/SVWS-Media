@@ -29,6 +29,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $flashType = 'success';
             $flashMessage = 'Titel wurde angelegt.';
+        } elseif ($action === 'create_title_from_scan') {
+            $selectedTitleId = MediaService::createTitle(
+                (string) ($_POST['scan_title'] ?? ''),
+                (string) ($_POST['scan_type'] ?? ''),
+                (string) ($_POST['scan_location'] ?? '')
+            );
+            $flashType = 'success';
+            $flashMessage = 'Titel wurde per Scan angelegt.';
         } elseif ($action === 'update_title') {
             MediaService::updateTitle(
                 $selectedTitleId,
@@ -94,6 +102,87 @@ $copies = $selectedTitle !== null ? MediaService::getCopiesByTitleId((int) $sele
 
 ob_start();
 ?>
+<style>
+    .svws-title-create-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .svws-btn-small {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    .svws-btn-scan {
+        border-color: #79a175;
+        color: #194a1d;
+        background: linear-gradient(180deg, #fbfffb 0%, #e5f3e3 100%);
+    }
+
+    .svws-btn-scan:hover {
+        border-color: #5c8558;
+        background: linear-gradient(180deg, #f8fdf8 0%, #d8ecd5 100%);
+        color: #173d1a;
+    }
+
+    .svws-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1200;
+        padding: 14px;
+    }
+
+    .svws-modal-backdrop.is-open {
+        display: flex;
+    }
+
+    .svws-modal {
+        width: min(680px, 100%);
+        max-height: calc(100vh - 28px);
+        overflow: auto;
+        background: #f6f6f6;
+        border: 1px solid #b9c6d2;
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+    }
+
+    .svws-modal-title {
+        margin: 0 0 2px;
+        font-size: 16px;
+        color: #103a5d;
+    }
+
+    .svws-modal-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+
+    .svws-modal-note {
+        margin-top: 6px;
+        color: #1f5b2c;
+        min-height: 14px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    .svws-scan-description {
+        width: 100%;
+        min-height: 92px;
+        border: 1px solid #b2b2b2;
+        border-radius: 4px;
+        padding: 6px 8px;
+        font-size: 11px;
+        resize: vertical;
+        background: #fff;
+    }
+</style>
 <div class="svws-split">
     <section class="svws-panel">
         <div class="svws-panel-header">
@@ -107,7 +196,14 @@ ob_start();
                 <input class="svws-search" type="text" name="title" placeholder="Neuer Titel" required>
                 <input class="svws-search" type="text" name="type" placeholder="Typ (optional)">
                 <input class="svws-search" type="text" name="location" placeholder="Standort (optional)">
-                <button class="svws-help-btn svws-btn-modern" type="submit">Titel anlegen</button>
+                <div class="svws-title-create-actions">
+                    <button class="svws-help-btn svws-btn-modern svws-btn-small" type="submit">Titel anlegen</button>
+                    <button
+                        class="svws-help-btn svws-btn-modern svws-btn-small svws-btn-scan"
+                        type="button"
+                        id="open-title-scan-modal"
+                    >Titel Scan</button>
+                </div>
             </form>
 
             <div style="margin:10px 0 8px; padding-top:8px; border-top:2px solid #c5d8ec;">
@@ -321,6 +417,198 @@ ob_start();
         </div>
     </section>
 </div>
+
+<div class="svws-modal-backdrop" id="title-scan-modal" aria-hidden="true">
+    <div class="svws-modal" role="dialog" aria-modal="true" aria-labelledby="title-scan-modal-title">
+        <h3 class="svws-modal-title" id="title-scan-modal-title">Titel per ISBN-Scan anlegen</h3>
+        <p class="svws-muted" style="margin:0 0 10px;">Barcode scannen oder ISBN eingeben, Buchdaten aus dem Internet laden und als neuen Titel speichern.</p>
+
+        <form method="post" id="title-scan-form" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px;">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="create_title_from_scan">
+
+            <label style="grid-column:1 / -1;">
+                <span class="svws-muted">ISBN / Barcode</span><br>
+                <input class="svws-search" type="text" id="scan-isbn" name="scan_isbn" placeholder="978..." autocomplete="off" required>
+            </label>
+
+            <label style="grid-column:1 / -1;">
+                <span class="svws-muted">Titel</span><br>
+                <input class="svws-search" type="text" id="scan-title" name="scan_title" required>
+            </label>
+
+            <label>
+                <span class="svws-muted">Typ</span><br>
+                <input class="svws-search" type="text" id="scan-type" name="scan_type" placeholder="Buch">
+            </label>
+
+            <label>
+                <span class="svws-muted">Standort</span><br>
+                <input class="svws-search" type="text" id="scan-location" name="scan_location" placeholder="z. B. Bibliothek A">
+            </label>
+
+            <label style="grid-column:1 / -1;">
+                <span class="svws-muted">Beschreibung (aus Internet)</span><br>
+                <textarea class="svws-scan-description" id="scan-description" readonly></textarea>
+            </label>
+
+            <div class="svws-modal-actions" style="grid-column:1 / -1;">
+                <button class="svws-help-btn svws-btn-modern" type="button" id="scan-fetch-btn">Buchdaten laden</button>
+                <button class="svws-help-btn svws-btn-modern svws-btn-scan" type="submit" id="scan-create-btn" disabled>Titel anlegen</button>
+                <button class="svws-help-btn svws-btn-modern" type="button" id="close-title-scan-modal">Schließen</button>
+            </div>
+            <div class="svws-modal-note" style="grid-column:1 / -1;" id="scan-status"></div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var openBtn = document.getElementById('open-title-scan-modal');
+        var closeBtn = document.getElementById('close-title-scan-modal');
+        var modal = document.getElementById('title-scan-modal');
+        var fetchBtn = document.getElementById('scan-fetch-btn');
+        var createBtn = document.getElementById('scan-create-btn');
+
+        var isbnInput = document.getElementById('scan-isbn');
+        var titleInput = document.getElementById('scan-title');
+        var typeInput = document.getElementById('scan-type');
+        var locationInput = document.getElementById('scan-location');
+        var descriptionInput = document.getElementById('scan-description');
+        var statusBox = document.getElementById('scan-status');
+
+        if (!openBtn || !closeBtn || !modal || !fetchBtn || !createBtn) {
+            return;
+        }
+
+        function setStatus(text, isError) {
+            statusBox.textContent = text;
+            statusBox.style.color = isError ? '#9c1e1e' : '#1f5b2c';
+        }
+
+        function openModal() {
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            setTimeout(function () {
+                isbnInput.focus();
+            }, 20);
+        }
+
+        function closeModal() {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function normalizeIsbn(raw) {
+            return (raw || '').replace(/[^0-9Xx]/g, '').toUpperCase();
+        }
+
+        function renderDescription(book) {
+            var lines = [];
+            if (book.title) {
+                lines.push('Titel: ' + book.title);
+            }
+            if (book.subtitle) {
+                lines.push('Untertitel: ' + book.subtitle);
+            }
+            if (book.authors) {
+                lines.push('Autor(en): ' + book.authors);
+            }
+            if (book.publish_date) {
+                lines.push('Erscheinungsjahr: ' + book.publish_date);
+            }
+            if (book.publishers) {
+                lines.push('Verlag: ' + book.publishers);
+            }
+            if (book.number_of_pages) {
+                lines.push('Seiten: ' + String(book.number_of_pages));
+            }
+
+            return lines.join('\n');
+        }
+
+        async function loadBookData() {
+            var isbn = normalizeIsbn(isbnInput.value);
+            if (!isbn) {
+                setStatus('Bitte zuerst eine gueltige ISBN eingeben.', true);
+                createBtn.disabled = true;
+                return;
+            }
+
+            setStatus('Buchdaten werden geladen ...', false);
+            createBtn.disabled = true;
+
+            var endpoint = 'https://openlibrary.org/api/books?jscmd=data&format=json&bibkeys=ISBN:' + encodeURIComponent(isbn);
+
+            try {
+                var response = await fetch(endpoint, { method: 'GET' });
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                var data = await response.json();
+                var key = 'ISBN:' + isbn;
+                var book = data[key];
+
+                if (!book || !book.title) {
+                    throw new Error('Keine Treffer fuer diese ISBN gefunden.');
+                }
+
+                var authors = (book.authors || []).map(function (item) {
+                    return item.name;
+                }).filter(Boolean).join(', ');
+
+                var publishers = (book.publishers || []).map(function (item) {
+                    return item.name;
+                }).filter(Boolean).join(', ');
+
+                titleInput.value = book.title || '';
+                if (!typeInput.value.trim()) {
+                    typeInput.value = 'Buch';
+                }
+                if (!locationInput.value.trim()) {
+                    locationInput.value = 'ISBN: ' + isbn;
+                }
+
+                descriptionInput.value = renderDescription({
+                    title: book.title || '',
+                    subtitle: book.subtitle || '',
+                    authors: authors,
+                    publish_date: book.publish_date || '',
+                    publishers: publishers,
+                    number_of_pages: book.number_of_pages || ''
+                });
+
+                setStatus('Buchdaten geladen. Du kannst Felder noch anpassen und dann speichern.', false);
+                createBtn.disabled = titleInput.value.trim() === '';
+            } catch (error) {
+                descriptionInput.value = '';
+                setStatus('Buchdaten konnten nicht geladen werden: ' + (error && error.message ? error.message : 'Unbekannter Fehler'), true);
+                createBtn.disabled = true;
+            }
+        }
+
+        openBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        fetchBtn.addEventListener('click', loadBookData);
+
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+                closeModal();
+            }
+        });
+
+        titleInput.addEventListener('input', function () {
+            createBtn.disabled = titleInput.value.trim() === '';
+        });
+    })();
+</script>
 <?php
 $content = ob_get_clean();
 
