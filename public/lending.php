@@ -304,14 +304,125 @@ ob_start();
 .svws-open-action {
     white-space: nowrap;
 }
+
+.svws-detail-stack {
+    display: grid;
+    gap: 5px;
+    margin-top: 12px;
+}
+
+.svws-content-header-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.svws-header-status {
+    margin: 0;
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.25;
+    border: 2px solid transparent;
+    background: #e8f4e8;
+    color: #0f5a1d;
+    box-shadow: 0 3px 10px rgba(9, 70, 18, 0.15);
+}
+
+.svws-header-status--success {
+    background: #e8f4e8;
+    color: #0f5a1d;
+    border-color: #8ebf94;
+}
+
+.svws-header-status--error {
+    background: #fde9e9;
+    color: #8f0e0e;
+    border-color: #d79a9a;
+    box-shadow: 0 3px 10px rgba(120, 20, 20, 0.16);
+}
+
+.svws-lending-list-panel .svws-panel-body {
+    background: #f6f8fc;
+}
+
+.svws-lending-list-panel .svws-list {
+    background: #fcfdff;
+}
+
+.svws-lending-list-panel .svws-list th {
+    background: #edf3fb;
+}
+
+.svws-lending-list-panel .svws-list a {
+    color: #173f74;
+    text-decoration: none;
+}
+
+.svws-lending-list-panel .svws-list a:hover {
+    color: #0f2e54;
+    text-decoration: none;
+}
+
+.svws-section-bar {
+    margin: 2px 0 0;
+    padding: 7px 10px;
+    color: #fff;
+    font-weight: 700;
+    border-radius: 6px;
+}
+
+.svws-section-card {
+    border: 3px solid;
+    border-radius: 10px;
+    padding: 12px;
+    margin: 0;
+    background: #fff;
+}
+
+.svws-section-card--blue {
+    border-color: #2f7dd1;
+}
+
+.svws-section-card--green {
+    border-color: #2f9d66;
+}
+
+.svws-section-card--orange {
+    border-color: #d67e1f;
+}
+
+.svws-section-card--purple {
+    border-color: #7b5ec8;
+}
+
+.svws-section-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+@media (max-width: 900px) {
+    .svws-header-status {
+        width: 100%;
+    }
+
+    .svws-section-row {
+        flex-wrap: wrap;
+    }
+}
 </style>
 <div class="svws-split">
-    <section class="svws-panel">
+    <section class="svws-panel svws-lending-list-panel">
         <div class="svws-panel-header">
             <h3>Ausleiher</h3>
             <span class="svws-muted">SVWS + Sonstige</span>
         </div>
-        <div class="svws-panel-body">
+        <div class="svws-panel-body svws-detail-stack">
             <form method="get" style="display:flex; gap:6px; margin-bottom:8px; align-items:center;">
                 <input class="svws-search" type="search" name="borrower_q" value="<?= htmlspecialchars($borrowerSearch) ?>" placeholder="Name/Klasse suchen">
                 <button class="svws-help-btn svws-btn-modern" type="submit">Suchen</button>
@@ -356,27 +467,33 @@ ob_start();
                 <?php endif; ?>
                 </tbody>
             </table>
+
+            <div class="svws-grid-note"><?= count($borrowers) ?> Ausleiher</div>
         </div>
     </section>
 
     <section class="svws-panel">
-        <div class="svws-panel-body">
+        <div class="svws-panel-body svws-detail-stack">
             <div class="svws-content-header">
                 <div class="svws-avatar">L</div>
-                <div>
-                    <p class="svws-title-main">Ausleihe & Rückgabe</p>
-                    <div class="svws-title-sub">Barcode-Scan mit Rückgabe oder Ausgabe</div>
+                <div class="svws-content-header-main">
+                    <div>
+                        <p class="svws-title-main">Ausleihe & Rückgabe</p>
+                        <div class="svws-title-sub">Barcode-Scan mit Rückgabe oder Ausgabe</div>
+                    </div>
+                    <?php if ($flashMessage !== ''): ?>
+                        <p class="svws-header-status svws-header-status--<?= $flashType === 'error' ? 'error' : 'success' ?>">
+                            <?= htmlspecialchars($flashMessage) ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
             </div>
 
-            <?php if ($flashMessage !== ''): ?>
-                <p style="margin:0 0 8px; color: <?= $flashType === 'error' ? '#a40000' : '#0c5c0c' ?>;">
-                    <?= htmlspecialchars($flashMessage) ?>
-                </p>
-            <?php endif; ?>
-
             <?php if ($selectedBorrower === null): ?>
-                <p class="svws-muted">Bitte links einen Ausleiher auswählen.</p>
+                <div class="svws-section-bar" style="background:#2f7dd1;">Ausleihe</div>
+                <fieldset class="svws-section-card svws-section-card--blue">
+                    <p class="svws-muted" style="margin:0;">Bitte links einen Ausleiher auswählen.</p>
+                </fieldset>
             <?php else: ?>
                 <?php
                 $selectedBorrowerName = trim((string) ($selectedBorrower['display_name'] ?? ''));
@@ -390,6 +507,8 @@ ob_start();
                     Klasse: <?= htmlspecialchars((string) ($selectedBorrower['klasse'] ?? '')) ?>
                 </div>
 
+                <div class="svws-section-bar" style="background:#2f7dd1;">Ausleihe per Scan</div>
+                <fieldset class="svws-section-card svws-section-card--blue">
                 <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px; margin-bottom:8px;">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="scan">
@@ -421,8 +540,11 @@ ob_start();
                         <button class="svws-help-btn svws-btn-modern" type="submit">Scan verarbeiten</button>
                     </div>
                 </form>
+                </fieldset>
 
-                <form method="post" style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
+                <div class="svws-section-bar" style="background:#2f9d66;">Direkte Rückgabe</div>
+                <fieldset class="svws-section-card svws-section-card--green">
+                <form method="post" class="svws-section-row" style="margin-bottom:0;">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="return">
                     <input type="hidden" name="borrower_q" value="<?= htmlspecialchars($borrowerSearch) ?>">
@@ -430,14 +552,11 @@ ob_start();
                     <input class="svws-search" type="text" name="barcode" placeholder="Barcode für direkte Rückgabe" required>
                     <button class="svws-help-btn svws-btn-modern" type="submit">Direkte Rückgabe</button>
                 </form>
+                </fieldset>
 
                 <?php if ($unknownBarcode !== ''): ?>
-                    <section class="svws-panel" style="margin-bottom:8px;">
-                        <div class="svws-panel-header">
-                            <h3>Unbekannter Barcode</h3>
-                            <span class="svws-muted"><?= htmlspecialchars($unknownBarcode) ?></span>
-                        </div>
-                        <div class="svws-panel-body">
+                    <div class="svws-section-bar" style="background:#d67e1f;">Unbekannter Barcode: <?= htmlspecialchars($unknownBarcode) ?></div>
+                    <fieldset class="svws-section-card svws-section-card--orange">
                             <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px;">
                                 <?= csrfField() ?>
                                 <input type="hidden" name="action" value="assign_unknown">
@@ -476,12 +595,12 @@ ob_start();
                                     <button class="svws-help-btn svws-btn-modern" type="submit">Zuordnen und ausleihen</button>
                                 </div>
                             </form>
-                        </div>
-                    </section>
+                    </fieldset>
                 <?php endif; ?>
             <?php endif; ?>
 
-            <h3 style="margin-bottom:6px;">Offene Ausleihen</h3>
+            <div class="svws-section-bar" style="background:#7b5ec8;">Offene Ausleihen</div>
+            <fieldset class="svws-section-card svws-section-card--purple">
             <div class="svws-table-wrap">
             <table class="svws-tight svws-open-table" data-resizable-table="open-lendings">
                 <thead>
@@ -529,6 +648,7 @@ ob_start();
                 </tbody>
             </table>
             </div>
+            </fieldset>
         </div>
     </section>
 </div>
