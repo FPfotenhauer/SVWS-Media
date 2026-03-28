@@ -248,34 +248,10 @@ ob_start();
 <div class="svws-split">
     <section class="svws-panel">
         <div class="svws-panel-header">
-            <h3>Medien</h3>
-            <span class="svws-muted">Titel</span>
+            <h3>Medienliste</h3>
+            <span class="svws-muted">Bestand</span>
         </div>
         <div class="svws-panel-body svws-detail-stack">
-            <form method="post" style="display:grid; gap:6px; margin-bottom:8px;">
-                <?= csrfField() ?>
-                <input type="hidden" name="action" value="create_title">
-                <input class="svws-search" type="text" name="title" placeholder="Neuer Titel" required>
-                <input class="svws-search" type="text" name="type" placeholder="Typ (optional)">
-                <input class="svws-search" type="text" name="location" placeholder="Standort (optional)">
-                <div class="svws-title-create-actions">
-                    <button class="svws-help-btn svws-btn-modern svws-btn-small" type="submit">Titel anlegen</button>
-                    <button
-                        class="svws-help-btn svws-btn-modern svws-btn-small svws-btn-scan"
-                        type="button"
-                        id="open-title-scan-modal"
-                    >Titel Scan</button>
-                </div>
-            </form>
-
-            <div style="margin:2px 0 0; padding-top:8px; border-top:2px solid #c5d8ec;">
-                <p class="svws-muted" style="margin:0 0 6px; font-weight:600;">Titel suchen</p>
-                <form method="get" style="display:flex; gap:6px; align-items:center;">
-                    <input class="svws-search" type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Titel suchen">
-                    <button class="svws-help-btn svws-btn-modern" type="submit">Suchen</button>
-                </form>
-            </div>
-
             <table class="svws-list">
                 <thead>
                 <tr>
@@ -319,6 +295,33 @@ ob_start();
                     <div class="svws-title-sub">Bibliothek und Ausleihe</div>
                 </div>
             </div>
+
+            <div style="margin:2px 0 0; padding:7px 10px; background:#1f5c98; color:#fff; font-weight:700; border-radius:6px;">Medien</div>
+            <fieldset style="border:3px solid #1f5c98; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                <form method="post" style="display:grid; gap:6px; margin-bottom:8px;">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="create_title">
+                    <input class="svws-search" type="text" name="title" placeholder="Neuer Titel" required>
+                    <input class="svws-search" type="text" name="type" placeholder="Typ (optional)">
+                    <input class="svws-search" type="text" name="location" placeholder="Standort (optional)">
+                    <div class="svws-title-create-actions">
+                        <button class="svws-help-btn svws-btn-modern svws-btn-small" type="submit">Titel anlegen</button>
+                        <button
+                            class="svws-help-btn svws-btn-modern svws-btn-small svws-btn-scan"
+                            type="button"
+                            id="open-title-scan-modal"
+                        >Titel Scan</button>
+                    </div>
+                </form>
+
+                <div style="margin:2px 0 0; padding-top:8px; border-top:2px solid #c5d8ec;">
+                    <p class="svws-muted" style="margin:0 0 6px; font-weight:600;">Titel suchen</p>
+                    <form method="get" style="display:flex; gap:6px; align-items:center;">
+                        <input class="svws-search" type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Titel suchen">
+                        <button class="svws-help-btn svws-btn-modern" type="submit">Suchen</button>
+                    </form>
+                </div>
+            </fieldset>
 
             <?php if ($flashMessage !== ''): ?>
                 <p style="margin:0 0 8px; color: <?= $flashType === 'error' ? '#a40000' : '#0c5c0c' ?>;">
