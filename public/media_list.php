@@ -10,9 +10,21 @@ require_once __DIR__ . '/../templates/layout.php';
 requireLogin();
 
 $search = trim((string) ($_GET['q'] ?? ''));
+$typeFilter = trim((string) ($_GET['type_filter'] ?? ''));
+$emptyTypeFilterToken = '__EMPTY__';
 $selectedTitleId = max(0, (int) ($_GET['title_id'] ?? 0));
+$sortBy = trim((string) ($_GET['sort'] ?? 'title'));
+$sortDir = mb_strtolower(trim((string) ($_GET['dir'] ?? 'asc')));
 $flashType = trim((string) ($_GET['flash_type'] ?? ''));
 $flashMessage = trim((string) ($_GET['flash_message'] ?? ''));
+
+$allowedSortFields = ['title', 'type', 'copy_count'];
+if (!in_array($sortBy, $allowedSortFields, true)) {
+    $sortBy = 'title';
+}
+if ($sortDir !== 'asc' && $sortDir !== 'desc') {
+    $sortDir = 'asc';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireValidCsrfToken();
@@ -84,7 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $redirectQuery = http_build_query([
         'q' => $search,
+        'type_filter' => $typeFilter,
         'title_id' => $selectedTitleId,
+        'sort' => $sortBy,
+        'dir' => $sortDir,
         'flash_type' => $flashType,
         'flash_message' => $flashMessage,
     ]);
@@ -92,10 +107,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-$mediaList = MediaService::getAll($search);
+$mediaListAll = MediaService::getAll($search);
+$typeOptionsMap = [];
+foreach ($mediaListAll as $mediaItem) {
+    $typeValue = trim((string) ($mediaItem['type'] ?? ''));
+    if ($typeValue !== '') {
+        $typeOptionsMap[$typeValue] = true;
+    }
+}
+$typeOptions = array_keys($typeOptionsMap);
+natcasesort($typeOptions);
+$typeOptions = array_values($typeOptions);
+
+$mediaList = $mediaListAll;
+if ($typeFilter === $emptyTypeFilterToken) {
+    $mediaList = array_values(array_filter(
+        $mediaListAll,
+        static fn (array $mediaItem): bool => trim((string) ($mediaItem['type'] ?? '')) === ''
+    ));
+} elseif ($typeFilter !== '') {
+    $mediaList = array_values(array_filter(
+        $mediaListAll,
+        static fn (array $mediaItem): bool => strcasecmp(trim((string) ($mediaItem['type'] ?? '')), $typeFilter) === 0
+    ));
+}
+usort($mediaList, static function (array $a, array $b) use ($sortBy, $sortDir): int {
+    if ($sortBy === 'copy_count') {
+        $left = (int) ($a['copy_count'] ?? 0);
+        $right = (int) ($b['copy_count'] ?? 0);
+        $primaryCmp = $left <=> $right;
+    } else {
+        $left = (string) ($a[$sortBy] ?? '');
+        $right = (string) ($b[$sortBy] ?? '');
+        $primaryCmp = strcasecmp($left, $right);
+    }
+
+    if ($primaryCmp !== 0) {
+        return $sortDir === 'desc' ? -$primaryCmp : $primaryCmp;
+    }
+
+    // Keep titles in ascending order as stable secondary sort key.
+    return strcasecmp((string) ($a['title'] ?? ''), (string) ($b['title'] ?? ''));
+});
+
 if ($selectedTitleId === 0 && $mediaList !== []) {
     $selectedTitleId = (int) $mediaList[0]['id'];
 }
+if ($selectedTitleId > 0 && $mediaList !== []) {
+    $isSelectedInCurrentList = false;
+    foreach ($mediaList as $mediaItem) {
+        if ((int) $mediaItem['id'] === $selectedTitleId) {
+            $isSelectedInCurrentList = true;
+            break;
+        }
+    }
+    if (!$isSelectedInCurrentList) {
+        $selectedTitleId = (int) $mediaList[0]['id'];
+    }
+}
+
+$nextSortDir = static function (string $field) use ($sortBy, $sortDir): string {
+    if ($sortBy === $field) {
+        return $sortDir === 'asc' ? 'desc' : 'asc';
+    }
+    return 'asc';
+};
+
+$sortIndicator = static function (string $field) use ($sortBy, $sortDir): string {
+    if ($sortBy !== $field) {
+        return '';
+    }
+    return $sortDir === 'asc' ? ' ▲' : ' ▼';
+};
 
 $selectedTitle = $selectedTitleId > 0 ? MediaService::getById($selectedTitleId) : null;
 $copies = $selectedTitle !== null ? MediaService::getCopiesByTitleId((int) $selectedTitle['id']) : [];
@@ -189,6 +272,47 @@ ob_start();
         margin-top: 12px;
     }
 
+    .svws-content-header-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .svws-header-status {
+        margin: 0;
+        padding: 7px 12px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.25;
+        border: 2px solid transparent;
+        background: #e8f4e8;
+        color: #0f5a1d;
+        box-shadow: 0 3px 10px rgba(9, 70, 18, 0.15);
+    }
+
+    .svws-header-status--success {
+        background: #e8f4e8;
+        color: #0f5a1d;
+        border-color: #8ebf94;
+    }
+
+    .svws-header-status--error {
+        background: #fde9e9;
+        color: #8f0e0e;
+        border-color: #d79a9a;
+        box-shadow: 0 3px 10px rgba(120, 20, 20, 0.16);
+    }
+
+    @media (max-width: 900px) {
+        .svws-header-status {
+            width: 100%;
+        }
+    }
+
     .svws-detail-card {
         background: #ffffff;
         border: 2px solid #9eb8d1;
@@ -244,20 +368,112 @@ ob_start();
     .svws-detail-card form {
         margin: 0;
     }
+
+    .svws-panel-media-list .svws-panel-body {
+        background: #f6f8fc;
+    }
+
+    .svws-panel-media-list .svws-list {
+        background: #fcfdff;
+    }
+
+    .svws-panel-media-list .svws-list th {
+        background: #edf3fb;
+    }
+
+    .svws-panel-media-list .svws-list a {
+        color: #173f74;
+        text-decoration: none;
+    }
+
+    .svws-panel-media-list .svws-list a:hover {
+        color: #0f2e54;
+        text-decoration: none;
+    }
+
+    .svws-sort-link {
+        color: #0f2f56;
+        text-decoration: none;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .svws-sort-link:hover {
+        text-decoration: none;
+    }
+
+    .svws-media-row-clickable {
+        cursor: pointer;
+    }
+
+    .svws-media-list-search {
+        margin-bottom: 8px;
+        padding: 8px;
+        border: 2px solid #b8cee4;
+        border-radius: 8px;
+        background: #eef4fb;
+    }
+
+    .svws-media-list-search-title {
+        margin: 0 0 6px;
+        font-weight: 700;
+        color: #214b76;
+    }
+
+    .svws-media-list-search-form {
+        display: grid;
+        gap: 6px;
+    }
+
+    .svws-media-list-search-row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
 </style>
 <div class="svws-split">
-    <section class="svws-panel">
+    <section class="svws-panel svws-panel-media-list">
         <div class="svws-panel-header">
             <h3>Medienliste</h3>
             <span class="svws-muted">Bestand</span>
         </div>
         <div class="svws-panel-body svws-detail-stack">
+            <div class="svws-media-list-search">
+                <p class="svws-media-list-search-title">Titel suchen</p>
+                <form method="get" class="svws-media-list-search-form">
+                    <div class="svws-media-list-search-row">
+                        <input class="svws-search" type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Titel suchen">
+                        <button class="svws-help-btn svws-btn-modern" type="submit">Suchen</button>
+                    </div>
+                    <div class="svws-media-list-search-row">
+                        <select class="svws-search" name="type_filter">
+                            <option value="">Typ: Alle</option>
+                            <option value="<?= htmlspecialchars($emptyTypeFilterToken) ?>" <?= $typeFilter === $emptyTypeFilterToken ? 'selected' : '' ?>>Typ: leer</option>
+                            <?php foreach ($typeOptions as $typeOption): ?>
+                                <option value="<?= htmlspecialchars((string) $typeOption) ?>" <?= strcasecmp((string) $typeOption, $typeFilter) === 0 ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars((string) $typeOption) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <input type="hidden" name="sort" value="<?= htmlspecialchars($sortBy) ?>">
+                    <input type="hidden" name="dir" value="<?= htmlspecialchars($sortDir) ?>">
+                    <input type="hidden" name="title_id" value="<?= (int) $selectedTitleId ?>">
+                </form>
+            </div>
+
             <table class="svws-list">
                 <thead>
                 <tr>
-                    <th style="width: 56%;">Titel</th>
-                    <th style="width: 22%;">Typ</th>
-                    <th style="width: 22%; text-align: right;">Bestand</th>
+                    <th style="width: 56%;">
+                        <a class="svws-sort-link" href="/media_list.php?<?= htmlspecialchars(http_build_query(['q' => $search, 'type_filter' => $typeFilter, 'title_id' => $selectedTitleId, 'sort' => 'title', 'dir' => $nextSortDir('title')])) ?>">Titel<?= $sortIndicator('title') ?></a>
+                    </th>
+                    <th style="width: 22%;">
+                        <a class="svws-sort-link" href="/media_list.php?<?= htmlspecialchars(http_build_query(['q' => $search, 'type_filter' => $typeFilter, 'title_id' => $selectedTitleId, 'sort' => 'type', 'dir' => $nextSortDir('type')])) ?>">Typ<?= $sortIndicator('type') ?></a>
+                    </th>
+                    <th style="width: 22%; text-align: right;">
+                        <a class="svws-sort-link" href="/media_list.php?<?= htmlspecialchars(http_build_query(['q' => $search, 'type_filter' => $typeFilter, 'title_id' => $selectedTitleId, 'sort' => 'copy_count', 'dir' => $nextSortDir('copy_count')])) ?>">Bestand<?= $sortIndicator('copy_count') ?></a>
+                    </th>
                 </tr>
                 </thead>
                 <tbody>
@@ -268,9 +484,14 @@ ob_start();
                 <?php else: ?>
                     <?php foreach ($mediaList as $media): ?>
                         <?php $isActiveRow = (int) $media['id'] === $selectedTitleId; ?>
-                        <tr class="<?= $isActiveRow ? 'svws-row-active' : '' ?>">
+                        <tr
+                            class="svws-media-row-clickable <?= $isActiveRow ? 'svws-row-active' : '' ?>"
+                            data-href="/media_list.php?<?= htmlspecialchars(http_build_query(['q' => $search, 'type_filter' => $typeFilter, 'title_id' => (int) $media['id'], 'sort' => $sortBy, 'dir' => $sortDir])) ?>"
+                            role="link"
+                            tabindex="0"
+                        >
                             <td>
-                                <a href="/media_list.php?<?= htmlspecialchars(http_build_query(['q' => $search, 'title_id' => (int) $media['id']])) ?>">
+                                <a href="/media_list.php?<?= htmlspecialchars(http_build_query(['q' => $search, 'type_filter' => $typeFilter, 'title_id' => (int) $media['id'], 'sort' => $sortBy, 'dir' => $sortDir])) ?>">
                                     <?= htmlspecialchars((string) $media['title']) ?>
                                 </a>
                             </td>
@@ -290,9 +511,16 @@ ob_start();
         <div class="svws-panel-body svws-detail-stack">
             <div class="svws-content-header">
                 <div class="svws-avatar">M</div>
-                <div>
-                    <p class="svws-title-main">Medienbestand</p>
-                    <div class="svws-title-sub">Bibliothek und Ausleihe</div>
+                <div class="svws-content-header-main">
+                    <div>
+                        <p class="svws-title-main">Medienbestand</p>
+                        <div class="svws-title-sub">Bibliothek und Ausleihe</div>
+                    </div>
+                    <?php if ($flashMessage !== ''): ?>
+                        <p class="svws-header-status svws-header-status--<?= $flashType === 'error' ? 'error' : 'success' ?>">
+                            <?= htmlspecialchars($flashMessage) ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -313,21 +541,7 @@ ob_start();
                         >Titel Scan</button>
                     </div>
                 </form>
-
-                <div style="margin:2px 0 0; padding-top:8px; border-top:2px solid #c5d8ec;">
-                    <p class="svws-muted" style="margin:0 0 6px; font-weight:600;">Titel suchen</p>
-                    <form method="get" style="display:flex; gap:6px; align-items:center;">
-                        <input class="svws-search" type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Titel suchen">
-                        <button class="svws-help-btn svws-btn-modern" type="submit">Suchen</button>
-                    </form>
-                </div>
             </fieldset>
-
-            <?php if ($flashMessage !== ''): ?>
-                <p style="margin:0 0 8px; color: <?= $flashType === 'error' ? '#a40000' : '#0c5c0c' ?>;">
-                    <?= htmlspecialchars($flashMessage) ?>
-                </p>
-            <?php endif; ?>
 
             <?php if ($selectedTitle === null): ?>
                 <div style="margin:2px 0 0; padding:7px 10px; background:#2f7dd1; color:#fff; font-weight:700; border-radius:6px;">Titel bearbeiten</div>
@@ -690,6 +904,38 @@ ob_start();
 
         titleInput.addEventListener('input', function () {
             createBtn.disabled = titleInput.value.trim() === '';
+        });
+    })();
+
+    (function () {
+        var rows = document.querySelectorAll('.svws-media-row-clickable');
+        if (!rows.length) {
+            return;
+        }
+
+        function isInteractiveTarget(target) {
+            return !!target.closest('a, button, input, select, textarea, label, form');
+        }
+
+        rows.forEach(function (row) {
+            var href = row.getAttribute('data-href');
+            if (!href) {
+                return;
+            }
+
+            row.addEventListener('click', function (event) {
+                if (isInteractiveTarget(event.target)) {
+                    return;
+                }
+                window.location.href = href;
+            });
+
+            row.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    window.location.href = href;
+                }
+            });
         });
     })();
 </script>
