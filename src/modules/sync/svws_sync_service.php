@@ -232,7 +232,8 @@ class SvwsSyncService
     private static function persistData(PDO $db, array $data): array
     {
         $students = $data['students'];
-        $classLookup = self::buildClassLookup($data['classes'] ?? []);
+        $classes = $data['classes'] ?? [];
+        $classLookup = self::buildClassLookup($classes);
         $teachers = $data['teachers'];
         $groups = $data['groups'];
 
@@ -240,6 +241,7 @@ class SvwsSyncService
 
         $db->beginTransaction();
         try {
+            self::syncClasses($db, $classes, $now);
             self::syncStudents($db, $students, $classLookup, $now);
             self::syncTeachers($db, $teachers, $now);
             self::syncGroups($db, $groups, $now);
@@ -254,11 +256,50 @@ class SvwsSyncService
 
         return [
             'students' => count($students),
+            'classes' => count($classes),
             'teachers' => count($teachers),
             'groups' => count($groups),
             'studentGroupLinks' => self::countTable($db, 'svws_student_groups'),
             'teacherGroupLinks' => self::countTable($db, 'svws_teacher_groups'),
         ];
+    }
+
+    private static function syncClasses(PDO $db, array $items, string $now): void
+    {
+        $ids = [];
+        $stmt = $db->prepare(
+            'INSERT INTO svws_classes (svws_id, kuerzel, name, jahrgang, raw_json, updated_at)
+             VALUES (:svws_id, :kuerzel, :name, :jahrgang, :raw_json, :updated_at)
+             ON CONFLICT(svws_id) DO UPDATE SET
+                kuerzel = excluded.kuerzel,
+                name = excluded.name,
+                jahrgang = excluded.jahrgang,
+                raw_json = excluded.raw_json,
+                updated_at = excluded.updated_at'
+        );
+
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $svwsId = self::extractId($item, ['id', 'idKlasse', 'klasseId', 'id_klasse']);
+            if ($svwsId === null) {
+                continue;
+            }
+            $ids[] = $svwsId;
+
+            $stmt->execute([
+                'svws_id' => $svwsId,
+                'kuerzel' => self::pickString($item, ['kuerzel', 'kuerzelAnzeige']),
+                'name' => self::pickString($item, ['bezeichnung', 'name', 'anzeigename', 'klassenbezeichnung']),
+                'jahrgang' => self::pickString($item, ['jahrgang', 'stufe']),
+                'raw_json' => json_encode($item, JSON_UNESCAPED_UNICODE),
+                'updated_at' => $now,
+            ]);
+        }
+
+        self::deleteMissing($db, 'svws_classes', $ids);
     }
 
     private static function syncSchoolMeta(PDO $db, array $meta, string $now): void

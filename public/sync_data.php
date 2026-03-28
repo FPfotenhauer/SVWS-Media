@@ -20,7 +20,7 @@ if (!in_array($perPage, $allowedPerPage, true)) {
 $sort = (string) ($_GET['sort'] ?? 'nachname');
 $dir = strtolower((string) ($_GET['dir'] ?? 'asc')) === 'desc' ? 'desc' : 'asc';
 
-$validTabs = ['students', 'teachers'];
+$validTabs = ['students', 'teachers', 'classes', 'groups'];
 if (!in_array($tab, $validTabs, true)) {
     $tab = 'students';
 }
@@ -28,14 +28,28 @@ if (!in_array($tab, $validTabs, true)) {
 $allowedSortByTab = [
     'students' => ['svws_id', 'nachname', 'vorname', 'klasse', 'status'],
     'teachers' => ['svws_id', 'kuerzel', 'nachname', 'vorname', 'email'],
+    'classes' => ['svws_id', 'kuerzel', 'name', 'jahrgang'],
+    'groups' => ['svws_id', 'kuerzel', 'name', 'jahrgang'],
 ];
+
+$defaultSortByTab = [
+    'students' => 'nachname',
+    'teachers' => 'nachname',
+    'classes' => 'kuerzel',
+    'groups' => 'kuerzel',
+];
+
 if (!in_array($sort, $allowedSortByTab[$tab], true)) {
-    $sort = 'nachname';
+    $sort = $defaultSortByTab[$tab];
 }
 
-$totalRows = $tab === 'students'
-    ? SvwsDataService::getStudentsCount($search)
-    : SvwsDataService::getTeachersCount($search);
+$totalRows = match ($tab) {
+    'students' => SvwsDataService::getStudentsCount($search),
+    'teachers' => SvwsDataService::getTeachersCount($search),
+    'classes' => SvwsDataService::getClassesCount($search),
+    'groups' => SvwsDataService::getGroupsCount($search),
+    default => SvwsDataService::getStudentsCount($search),
+};
 $totalPages = max(1, (int) ceil($totalRows / $perPage));
 if ($page > $totalPages) {
     $page = $totalPages;
@@ -48,6 +62,12 @@ $students = $tab === 'students'
     : [];
 $teachers = $tab === 'teachers'
     ? SvwsDataService::getTeachers($search, $perPage, $offset, $sort, $dir)
+    : [];
+$classes = $tab === 'classes'
+    ? SvwsDataService::getClasses($search, $perPage, $offset, $sort, $dir)
+    : [];
+$groups = $tab === 'groups'
+    ? SvwsDataService::getGroups($search, $perPage, $offset, $sort, $dir)
     : [];
 
 $buildUrl = static function (array $overrides = []) use ($tab, $search, $page, $perPage, $sort, $dir): string {
@@ -185,42 +205,29 @@ ob_start();
 .svws-action-btn {
     text-decoration: none;
     display: inline-block;
-    color: #222;
-    background: linear-gradient(180deg, #fafafa 0%, #efefef 100%);
-    border: 1px solid #b7b7b7;
-    border-radius: 8px;
-    padding: 3px 10px;
-    font-size: 10px;
-    font-weight: 600;
-    line-height: 1.2;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-    transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    color: inherit;
 }
 
 .svws-action-btn:visited,
 .svws-action-btn:hover,
 .svws-action-btn:active {
-    color: #222;
+    color: inherit;
     text-decoration: none;
-}
-
-.svws-action-btn:hover {
-    background: linear-gradient(180deg, #ffffff 0%, #ececec 100%);
-    border-color: #9e9e9e;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 </style>
 <div class="svws-content-header">
     <div class="svws-avatar">D</div>
     <div>
         <p class="svws-title-main">SVWS Stammdaten</p>
-        <div class="svws-title-sub">Schüler und Lehrkräfte aus API-Sync</div>
+        <div class="svws-title-sub">Schüler, Lehrkräfte, Klassen und Lerngruppen aus API-Sync</div>
     </div>
 </div>
 
 <div class="svws-tabs svws-tabs-svws">
     <a class="svws-tab <?= $tab === 'students' ? 'active' : '' ?>" href="/sync_data.php?tab=students">Schüler</a>
     <a class="svws-tab <?= $tab === 'teachers' ? 'active' : '' ?>" href="/sync_data.php?tab=teachers">Lehrkräfte</a>
+    <a class="svws-tab <?= $tab === 'classes' ? 'active' : '' ?>" href="/sync_data.php?tab=classes">Klassen</a>
+    <a class="svws-tab <?= $tab === 'groups' ? 'active' : '' ?>" href="/sync_data.php?tab=groups">Lerngruppen</a>
 </div>
 
 <section class="svws-panel" style="margin-bottom:8px;">
@@ -238,6 +245,8 @@ ob_start();
             <tbody>
             <tr><td>Schüler</td><td><?= htmlspecialchars((string) $overview['students']) ?></td></tr>
             <tr><td>Lehrkräfte</td><td><?= htmlspecialchars((string) $overview['teachers']) ?></td></tr>
+            <tr><td>Klassen</td><td><?= htmlspecialchars((string) $overview['classes']) ?></td></tr>
+            <tr><td>Lerngruppen</td><td><?= htmlspecialchars((string) $overview['groups']) ?></td></tr>
             </tbody>
         </table>
     </div>
@@ -255,7 +264,7 @@ ob_start();
             <input type="hidden" name="dir" value="<?= htmlspecialchars($dir) ?>">
             <input type="hidden" name="page" value="1">
             <input class="svws-search" type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Suche">
-            <button class="svws-help-btn" type="submit">Filtern</button>
+            <button class="svws-help-btn svws-btn-modern" type="submit">Filtern</button>
             <label class="svws-muted" style="display:inline-flex; align-items:center; gap:4px; margin-left:8px;">
                 Pro Seite
                 <select class="svws-search" name="per_page" style="width:auto;">
@@ -264,7 +273,7 @@ ob_start();
                     <?php endforeach; ?>
                 </select>
             </label>
-            <a class="svws-help-btn" href="/sync_svws.php" style="text-decoration:none;display:inline-block;">Neu synchronisieren</a>
+            <a class="svws-help-btn svws-btn-modern" href="/sync_svws.php" style="text-decoration:none;display:inline-block;">Neu synchronisieren</a>
         </form>
 
         <?php if ($tab === 'students'): ?>
@@ -291,7 +300,7 @@ ob_start();
                         <td><?= htmlspecialchars((string) ($row['status'] ?? '')) ?></td>
                         <td class="svws-table-action">
                             <?php if ($borrowerUrl !== ''): ?>
-                                <a class="svws-help-btn svws-action-btn" href="<?= htmlspecialchars($borrowerUrl) ?>">Zur Ausleihe</a>
+                                <a class="svws-help-btn svws-btn-modern svws-action-btn" href="<?= htmlspecialchars($borrowerUrl) ?>">Zur Ausleihe</a>
                             <?php else: ?>
                                 <span class="svws-muted">-</span>
                             <?php endif; ?>
@@ -330,7 +339,7 @@ ob_start();
                         <td><?= htmlspecialchars((string) ($row['email'] ?? '')) ?></td>
                         <td class="svws-table-action">
                             <?php if ($borrowerUrl !== ''): ?>
-                                <a class="svws-help-btn svws-action-btn" href="<?= htmlspecialchars($borrowerUrl) ?>">Zur Ausleihe</a>
+                                <a class="svws-help-btn svws-btn-modern svws-action-btn" href="<?= htmlspecialchars($borrowerUrl) ?>">Zur Ausleihe</a>
                             <?php else: ?>
                                 <span class="svws-muted">-</span>
                             <?php endif; ?>
@@ -345,15 +354,73 @@ ob_start();
             </div>
         <?php endif; ?>
 
+        <?php if ($tab === 'classes'): ?>
+            <div class="svws-table-wrap">
+            <table class="svws-tight svws-table-enhanced" data-resizable-table="classes">
+                <thead>
+                <tr>
+                    <th><a class="svws-sort-link" href="<?= htmlspecialchars($sortLink('svws_id')) ?>">SVWS-ID <span class="svws-sort-indicator"><?= $sortIndicator('svws_id') ?></span></a><span class="svws-col-resizer" aria-hidden="true"></span></th>
+                    <th><a class="svws-sort-link" href="<?= htmlspecialchars($sortLink('kuerzel')) ?>">Kürzel <span class="svws-sort-indicator"><?= $sortIndicator('kuerzel') ?></span></a><span class="svws-col-resizer" aria-hidden="true"></span></th>
+                    <th><a class="svws-sort-link" href="<?= htmlspecialchars($sortLink('name')) ?>">Bezeichnung <span class="svws-sort-indicator"><?= $sortIndicator('name') ?></span></a><span class="svws-col-resizer" aria-hidden="true"></span></th>
+                    <th><a class="svws-sort-link" href="<?= htmlspecialchars($sortLink('jahrgang')) ?>">Jahrgang <span class="svws-sort-indicator"><?= $sortIndicator('jahrgang') ?></span></a><span class="svws-col-resizer" aria-hidden="true"></span></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($classes as $row): ?>
+                    <tr>
+                        <td><?= htmlspecialchars((string) $row['svws_id']) ?></td>
+                        <td><?= htmlspecialchars((string) ($row['kuerzel'] ?? '')) ?></td>
+                        <td><?= htmlspecialchars((string) ($row['name'] ?? '')) ?></td>
+                        <td><?= htmlspecialchars((string) ($row['jahrgang'] ?? '')) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if ($classes === []): ?>
+                    <tr><td colspan="4" class="svws-muted">Keine Klassendaten vorhanden.</td></tr>
+                <?php endif; ?>
+                </tbody>
+            </table>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($tab === 'groups'): ?>
+            <div class="svws-table-wrap">
+            <table class="svws-tight svws-table-enhanced" data-resizable-table="groups">
+                <thead>
+                <tr>
+                    <th><a class="svws-sort-link" href="<?= htmlspecialchars($sortLink('svws_id')) ?>">SVWS-ID <span class="svws-sort-indicator"><?= $sortIndicator('svws_id') ?></span></a><span class="svws-col-resizer" aria-hidden="true"></span></th>
+                    <th><a class="svws-sort-link" href="<?= htmlspecialchars($sortLink('kuerzel')) ?>">Kürzel <span class="svws-sort-indicator"><?= $sortIndicator('kuerzel') ?></span></a><span class="svws-col-resizer" aria-hidden="true"></span></th>
+                    <th><a class="svws-sort-link" href="<?= htmlspecialchars($sortLink('name')) ?>">Bezeichnung <span class="svws-sort-indicator"><?= $sortIndicator('name') ?></span></a><span class="svws-col-resizer" aria-hidden="true"></span></th>
+                    <th>Unterricht</th>
+                    <th><a class="svws-sort-link" href="<?= htmlspecialchars($sortLink('jahrgang')) ?>">Jahrgang <span class="svws-sort-indicator"><?= $sortIndicator('jahrgang') ?></span></a><span class="svws-col-resizer" aria-hidden="true"></span></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($groups as $row): ?>
+                    <tr>
+                        <td><?= htmlspecialchars((string) $row['svws_id']) ?></td>
+                        <td><?= htmlspecialchars((string) ($row['kuerzel'] ?? '')) ?></td>
+                        <td><?= htmlspecialchars((string) ($row['name'] ?? '')) ?></td>
+                        <td><?= htmlspecialchars((string) ($row['unterrichtstyp'] ?? 'Lerngruppe')) ?></td>
+                        <td><?= htmlspecialchars((string) ($row['jahrgang'] ?? '')) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if ($groups === []): ?>
+                    <tr><td colspan="5" class="svws-muted">Keine Lerngruppen vorhanden.</td></tr>
+                <?php endif; ?>
+                </tbody>
+            </table>
+            </div>
+        <?php endif; ?>
+
         <div class="svws-pagination">
             <span class="svws-muted">Seite <?= $page ?> von <?= $totalPages ?> (<?= $totalRows ?> Einträge)</span>
             <?php if ($page > 1): ?>
-                <a class="svws-help-btn" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => 1])) ?>">« Erste</a>
-                <a class="svws-help-btn" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $page - 1])) ?>">‹ Zurück</a>
+                <a class="svws-help-btn svws-btn-modern" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => 1])) ?>">« Erste</a>
+                <a class="svws-help-btn svws-btn-modern" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $page - 1])) ?>">‹ Zurück</a>
             <?php endif; ?>
             <?php if ($page < $totalPages): ?>
-                <a class="svws-help-btn" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $page + 1])) ?>">Weiter ›</a>
-                <a class="svws-help-btn" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $totalPages])) ?>">Letzte »</a>
+                <a class="svws-help-btn svws-btn-modern" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $page + 1])) ?>">Weiter ›</a>
+                <a class="svws-help-btn svws-btn-modern" style="text-decoration:none;display:inline-block;" href="<?= htmlspecialchars($buildUrl(['page' => $totalPages])) ?>">Letzte »</a>
             <?php endif; ?>
         </div>
 

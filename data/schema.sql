@@ -99,6 +99,16 @@ CREATE TABLE IF NOT EXISTS svws_students (
     updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS svws_classes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    svws_id INTEGER NOT NULL UNIQUE,
+    kuerzel TEXT,
+    name TEXT,
+    jahrgang TEXT,
+    raw_json TEXT,
+    updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS svws_teachers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     svws_id INTEGER NOT NULL UNIQUE,

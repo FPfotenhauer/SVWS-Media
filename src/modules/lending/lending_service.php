@@ -322,6 +322,47 @@ class LendingService
         ];
     }
 
+    public static function returnByLendingId(int $lendingId, int $actorUserId): array
+    {
+        if ($lendingId <= 0) {
+            throw new InvalidArgumentException('Ausleihe ist ungueltig.');
+        }
+
+        $db = getDB();
+        $openStmt = $db->prepare(
+            'SELECT id
+             FROM lending
+             WHERE id = :id AND returned_at IS NULL
+             LIMIT 1'
+        );
+        $openStmt->execute(['id' => $lendingId]);
+        $open = $openStmt->fetch();
+
+        if ($open === false) {
+            throw new RuntimeException('Ausleihe ist nicht mehr offen.');
+        }
+
+        $stmt = $db->prepare(
+            'UPDATE lending
+             SET returned_at = :returned_at,
+                 status = :status,
+                 user_id = :user_id
+             WHERE id = :id'
+        );
+        $now = gmdate('c');
+        $stmt->execute([
+            'returned_at' => $now,
+            'status' => 'returned',
+            'user_id' => $actorUserId,
+            'id' => $lendingId,
+        ]);
+
+        return [
+            'lending_id' => $lendingId,
+            'returned_at' => $now,
+        ];
+    }
+
     public static function findCopyByBarcode(string $barcode): ?array
     {
         $barcode = trim($barcode);

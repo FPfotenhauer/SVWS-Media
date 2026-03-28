@@ -29,8 +29,8 @@ ob_start();
         <h3>Medienbestand</h3>
     </div>
     <div class="svws-panel-body" style="display:flex; gap:8px;">
-        <a class="svws-help-btn" href="/report_media.php" target="_blank" rel="noopener">Druckansicht</a>
-        <a class="svws-help-btn" href="/report_media.php?format=csv">CSV exportieren</a>
+        <a class="svws-help-btn svws-btn-modern" href="/report_media.php" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;">Druckansicht</a>
+        <a class="svws-help-btn svws-btn-modern" href="/report_media.php?format=csv" style="text-decoration:none;display:inline-block;">CSV exportieren</a>
     </div>
 </section>
 
@@ -59,8 +59,8 @@ ob_start();
                 </select>
             </label>
             <div style="display:flex; gap:8px; align-items:flex-end;">
-                <button class="svws-help-btn" type="submit">Druckansicht</button>
-                <button class="svws-help-btn" type="submit" name="format" value="csv">CSV exportieren</button>
+                <button class="svws-help-btn svws-btn-modern" type="submit">Druckansicht</button>
+                <button class="svws-help-btn svws-btn-modern" type="submit" name="format" value="csv">CSV exportieren</button>
             </div>
         </form>
     </div>

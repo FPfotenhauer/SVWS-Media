@@ -58,6 +58,23 @@ $borrowerName = $borrower !== null ? LendingService::formatBorrowerName($borrowe
         body { font-family: "Segoe UI", Arial, sans-serif; margin: 20px; color: #111; }
         h1 { margin: 0 0 4px; }
         .meta { color: #555; margin-bottom: 14px; }
+        .print-btn {
+            border: 1px solid #8ea5bc;
+            border-radius: 6px;
+            padding: 6px 12px;
+            background: linear-gradient(180deg, #ffffff 0%, #f1f6fb 100%);
+            color: #1a3f63;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.2;
+            cursor: pointer;
+        }
+
+        .print-btn:hover {
+            border-color: #6f8eac;
+            background: linear-gradient(180deg, #fdfefe 0%, #e8f1f9 100%);
+            color: #123b61;
+        }
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #bbb; padding: 6px 8px; text-align: left; font-size: 12px; }
         th { background: #f0f0f0; }
@@ -74,7 +91,7 @@ $borrowerName = $borrower !== null ? LendingService::formatBorrowerName($borrowe
         | Stand: <?= htmlspecialchars(date('d.m.Y H:i')) ?> Uhr
     </div>
     <div class="no-print" style="margin-bottom:10px;">
-        <button onclick="window.print()">Drucken</button>
+        <button class="print-btn" onclick="window.print()">Drucken</button>
     </div>
     <table>
         <thead>
