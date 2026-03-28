@@ -182,6 +182,68 @@ ob_start();
         resize: vertical;
         background: #fff;
     }
+
+    .svws-detail-stack {
+        display: grid;
+        gap: 5px;
+        margin-top: 12px;
+    }
+
+    .svws-detail-card {
+        background: #ffffff;
+        border: 2px solid #9eb8d1;
+        border-left-width: 8px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(16, 41, 66, 0.12);
+        outline: 2px solid rgba(255, 255, 255, 0.9);
+    }
+
+    html.dark-mode .svws-detail-card {
+        background: #1b1e22;
+        border-color: #4d6175;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+        outline-color: rgba(0, 0, 0, 0.45);
+    }
+
+    .svws-detail-card--title {
+        border-left-color: #2f7dd1;
+    }
+
+    .svws-detail-card--copy-create {
+        border-left-color: #2f9d66;
+    }
+
+    .svws-detail-card--copies {
+        border-left-color: #7b5ec8;
+    }
+
+    .svws-detail-card-header {
+        margin: 0;
+        padding: 11px 14px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text);
+        border-bottom: 1px solid #c7d6e5;
+        background: linear-gradient(180deg, #f6fbff 0%, #eaf2fa 100%);
+    }
+
+    html.dark-mode .svws-detail-card-header {
+        border-bottom-color: #3e4f61;
+        background: linear-gradient(180deg, #242b33 0%, #1f252c 100%);
+    }
+
+    .svws-detail-card-body {
+        padding: 14px;
+    }
+
+    .svws-detail-card + .svws-detail-card {
+        margin-top: 2px;
+    }
+
+    .svws-detail-card form {
+        margin: 0;
+    }
 </style>
 <div class="svws-split">
     <section class="svws-panel">
@@ -189,7 +251,7 @@ ob_start();
             <h3>Medien</h3>
             <span class="svws-muted">Titel</span>
         </div>
-        <div class="svws-panel-body">
+        <div class="svws-panel-body svws-detail-stack">
             <form method="post" style="display:grid; gap:6px; margin-bottom:8px;">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="create_title">
@@ -206,7 +268,7 @@ ob_start();
                 </div>
             </form>
 
-            <div style="margin:10px 0 8px; padding-top:8px; border-top:2px solid #c5d8ec;">
+            <div style="margin:2px 0 0; padding-top:8px; border-top:2px solid #c5d8ec;">
                 <p class="svws-muted" style="margin:0 0 6px; font-weight:600;">Titel suchen</p>
                 <form method="get" style="display:flex; gap:6px; align-items:center;">
                     <input class="svws-search" type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Titel suchen">
@@ -249,7 +311,7 @@ ob_start();
     </section>
 
     <section class="svws-panel">
-        <div class="svws-panel-body">
+        <div class="svws-panel-body svws-detail-stack">
             <div class="svws-content-header">
                 <div class="svws-avatar">M</div>
                 <div>
@@ -265,63 +327,81 @@ ob_start();
             <?php endif; ?>
 
             <?php if ($selectedTitle === null): ?>
-                <p class="svws-muted">Waehle links einen Titel aus oder lege einen neuen Titel an.</p>
+                <div style="margin:2px 0 0; padding:7px 10px; background:#2f7dd1; color:#fff; font-weight:700; border-radius:6px;">Titel bearbeiten</div>
+                <fieldset style="border:3px solid #2f7dd1; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                    <p class="svws-muted" style="margin:0;">Waehle links einen Titel aus, um ihn zu bearbeiten.</p>
+                </fieldset>
+
+                <div style="margin:2px 0 0; padding:7px 10px; background:#2f9d66; color:#fff; font-weight:700; border-radius:6px;">Exemplar anlegen</div>
+                <fieldset style="border:3px solid #2f9d66; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                    <p class="svws-muted" style="margin:0;">Waehle links einen Titel aus, um ein Exemplar anzulegen.</p>
+                </fieldset>
+
+                <div style="margin:2px 0 0; padding:7px 10px; background:#7b5ec8; color:#fff; font-weight:700; border-radius:6px;">Exemplare</div>
+                <fieldset style="border:3px solid #7b5ec8; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                    <p class="svws-muted" style="margin:0;">Noch keine Exemplare sichtbar. Waehle links einen Titel aus.</p>
+                </fieldset>
             <?php else: ?>
-                <h3 style="margin-bottom: 6px;">Titel bearbeiten</h3>
-                <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px; margin-bottom:8px;">
-                    <?= csrfField() ?>
-                    <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
-                    <label>
-                        <span class="svws-muted">Titel</span><br>
-                        <input class="svws-search" type="text" name="title" value="<?= htmlspecialchars((string) $selectedTitle['title']) ?>" required>
-                    </label>
-                    <label>
-                        <span class="svws-muted">Typ</span><br>
-                        <input class="svws-search" type="text" name="type" value="<?= htmlspecialchars((string) ($selectedTitle['type'] ?? '')) ?>">
-                    </label>
-                    <label>
-                        <span class="svws-muted">Standort</span><br>
-                        <input class="svws-search" type="text" name="location" value="<?= htmlspecialchars((string) ($selectedTitle['location'] ?? '')) ?>">
-                    </label>
-                    <div style="display:flex; align-items:flex-end; gap:6px;">
-                        <button class="svws-help-btn svws-btn-modern" type="submit" name="action" value="update_title">Titel speichern</button>
-                        <button
-                            class="svws-help-btn svws-btn-modern"
-                            type="submit"
-                            name="action"
-                            value="delete_title"
-                            onclick="return confirm('Titel wirklich löschen?');"
-                        >Titel löschen</button>
-                    </div>
-                </form>
+                <div style="margin:2px 0 0; padding:7px 10px; background:#2f7dd1; color:#fff; font-weight:700; border-radius:6px;">Titel bearbeiten</div>
+                <fieldset style="border:3px solid #2f7dd1; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                    <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px;">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
+                        <label>
+                            <span class="svws-muted">Titel</span><br>
+                            <input class="svws-search" type="text" name="title" value="<?= htmlspecialchars((string) $selectedTitle['title']) ?>" required>
+                        </label>
+                        <label>
+                            <span class="svws-muted">Typ</span><br>
+                            <input class="svws-search" type="text" name="type" value="<?= htmlspecialchars((string) ($selectedTitle['type'] ?? '')) ?>">
+                        </label>
+                        <label>
+                            <span class="svws-muted">Standort</span><br>
+                            <input class="svws-search" type="text" name="location" value="<?= htmlspecialchars((string) ($selectedTitle['location'] ?? '')) ?>">
+                        </label>
+                        <div style="display:flex; align-items:flex-end; gap:6px;">
+                            <button class="svws-help-btn svws-btn-modern" type="submit" name="action" value="update_title">Titel speichern</button>
+                            <button
+                                class="svws-help-btn svws-btn-modern"
+                                type="submit"
+                                name="action"
+                                value="delete_title"
+                                onclick="return confirm('Titel wirklich löschen?');"
+                            >Titel löschen</button>
+                        </div>
+                    </form>
+                </fieldset>
 
-                <h3 style="margin-bottom: 6px;">Exemplar anlegen</h3>
-                <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px; margin-bottom:8px;">
-                    <?= csrfField() ?>
-                    <input type="hidden" name="action" value="create_copy">
-                    <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
-                    <label>
-                        <span class="svws-muted">Barcode</span><br>
-                        <input class="svws-search" type="text" name="barcode" placeholder="z. B. B101">
-                    </label>
-                    <label>
-                        <span class="svws-muted">Inventar-Nr.</span><br>
-                        <input class="svws-search" type="text" name="inventory_number">
-                    </label>
-                    <label>
-                        <span class="svws-muted">Zustand</span><br>
-                        <input class="svws-search" type="text" name="condition" placeholder="gut, neu, gebraucht...">
-                    </label>
-                    <label>
-                        <span class="svws-muted">Memo</span><br>
-                        <input class="svws-search" type="text" name="memo">
-                    </label>
-                    <div>
-                        <button class="svws-help-btn svws-btn-modern" type="submit">Exemplar anlegen</button>
-                    </div>
-                </form>
+                <div style="margin:2px 0 0; padding:7px 10px; background:#2f9d66; color:#fff; font-weight:700; border-radius:6px;">Exemplar anlegen</div>
+                <fieldset style="border:3px solid #2f9d66; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                    <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px;">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="action" value="create_copy">
+                        <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
+                        <label>
+                            <span class="svws-muted">Barcode</span><br>
+                            <input class="svws-search" type="text" name="barcode" placeholder="z. B. B101">
+                        </label>
+                        <label>
+                            <span class="svws-muted">Inventar-Nr.</span><br>
+                            <input class="svws-search" type="text" name="inventory_number">
+                        </label>
+                        <label>
+                            <span class="svws-muted">Zustand</span><br>
+                            <input class="svws-search" type="text" name="condition" placeholder="gut, neu, gebraucht...">
+                        </label>
+                        <label>
+                            <span class="svws-muted">Memo</span><br>
+                            <input class="svws-search" type="text" name="memo">
+                        </label>
+                        <div>
+                            <button class="svws-help-btn svws-btn-modern" type="submit">Exemplar anlegen</button>
+                        </div>
+                    </form>
+                </fieldset>
 
-                <h3 style="margin-bottom: 6px;">Exemplare</h3>
+                <div style="margin:2px 0 0; padding:7px 10px; background:#7b5ec8; color:#fff; font-weight:700; border-radius:6px;">Exemplare</div>
+                <fieldset style="border:3px solid #7b5ec8; border-radius:10px; padding:12px; margin:0; background:#fff;">
                 <table class="svws-tight">
                     <thead>
                     <tr>
@@ -408,11 +488,12 @@ ob_start();
                     </tbody>
                 </table>
 
-                <div class="svws-grid-note">
-                    Titel-ID <?= htmlspecialchars((string) $selectedTitle['id']) ?> |
-                    Exemplare <?= htmlspecialchars((string) $selectedTitle['copy_count']) ?> |
-                    offen verliehen <?= htmlspecialchars((string) $selectedTitle['borrowed_count']) ?>
-                </div>
+                    <div class="svws-grid-note">
+                        Titel-ID <?= htmlspecialchars((string) $selectedTitle['id']) ?> |
+                        Exemplare <?= htmlspecialchars((string) $selectedTitle['copy_count']) ?> |
+                        offen verliehen <?= htmlspecialchars((string) $selectedTitle['borrowed_count']) ?>
+                    </div>
+                    </fieldset>
             <?php endif; ?>
         </div>
     </section>
