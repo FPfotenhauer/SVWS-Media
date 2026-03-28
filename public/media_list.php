@@ -17,6 +17,7 @@ $sortBy = trim((string) ($_GET['sort'] ?? 'title'));
 $sortDir = mb_strtolower(trim((string) ($_GET['dir'] ?? 'asc')));
 $flashType = trim((string) ($_GET['flash_type'] ?? ''));
 $flashMessage = trim((string) ($_GET['flash_message'] ?? ''));
+$flashAction = trim((string) ($_GET['flash_action'] ?? ''));
 
 $allowedSortFields = ['title', 'type', 'copy_count'];
 if (!in_array($sortBy, $allowedSortFields, true)) {
@@ -30,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireValidCsrfToken();
 
     $action = (string) ($_POST['action'] ?? '');
+    $flashAction = $action;
     $selectedTitleId = max(0, (int) ($_POST['title_id'] ?? $selectedTitleId));
 
     try {
@@ -102,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'dir' => $sortDir,
         'flash_type' => $flashType,
         'flash_message' => $flashMessage,
+        'flash_action' => $flashAction,
     ]);
     header('Location: /media_list.php?' . $redirectQuery);
     exit;
@@ -430,6 +433,30 @@ ob_start();
         gap: 6px;
         align-items: center;
     }
+
+    .svws-collapsible-toggle {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 28px !important;
+    }
+
+    .svws-collapsible-toggle::after {
+        content: '▾';
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+    }
+
+    .svws-collapsible-toggle.is-collapsed::after {
+        content: '▸';
+    }
+
+    .svws-collapsible-content.is-collapsed {
+        display: none;
+    }
 </style>
 <div class="svws-split">
     <section class="svws-panel svws-panel-media-list">
@@ -524,8 +551,8 @@ ob_start();
                 </div>
             </div>
 
-            <div style="margin:2px 0 0; padding:7px 10px; background:#1f5c98; color:#fff; font-weight:700; border-radius:6px;">Medien</div>
-            <fieldset style="border:3px solid #1f5c98; border-radius:10px; padding:12px; margin:0; background:#fff;">
+            <div class="svws-collapsible-toggle" style="margin:2px 0 0; padding:7px 10px; background:#1f5c98; color:#fff; font-weight:700; border-radius:6px;">Medien</div>
+            <fieldset class="svws-collapsible-content" style="border:3px solid #1f5c98; border-radius:10px; padding:12px; margin:0; background:#fff;">
                 <form method="post" style="display:grid; gap:6px; margin-bottom:8px;">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="create_title">
@@ -544,23 +571,23 @@ ob_start();
             </fieldset>
 
             <?php if ($selectedTitle === null): ?>
-                <div style="margin:2px 0 0; padding:7px 10px; background:#2f7dd1; color:#fff; font-weight:700; border-radius:6px;">Titel bearbeiten</div>
-                <fieldset style="border:3px solid #2f7dd1; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                <div class="svws-collapsible-toggle" style="margin:2px 0 0; padding:7px 10px; background:#2f7dd1; color:#fff; font-weight:700; border-radius:6px;">Titel bearbeiten</div>
+                <fieldset class="svws-collapsible-content" style="border:3px solid #2f7dd1; border-radius:10px; padding:12px; margin:0; background:#fff;">
                     <p class="svws-muted" style="margin:0;">Waehle links einen Titel aus, um ihn zu bearbeiten.</p>
                 </fieldset>
 
-                <div style="margin:2px 0 0; padding:7px 10px; background:#2f9d66; color:#fff; font-weight:700; border-radius:6px;">Exemplar anlegen</div>
-                <fieldset style="border:3px solid #2f9d66; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                <div class="svws-collapsible-toggle" style="margin:2px 0 0; padding:7px 10px; background:#2f9d66; color:#fff; font-weight:700; border-radius:6px;">Exemplar anlegen</div>
+                <fieldset class="svws-collapsible-content" style="border:3px solid #2f9d66; border-radius:10px; padding:12px; margin:0; background:#fff;">
                     <p class="svws-muted" style="margin:0;">Waehle links einen Titel aus, um ein Exemplar anzulegen.</p>
                 </fieldset>
 
-                <div style="margin:2px 0 0; padding:7px 10px; background:#7b5ec8; color:#fff; font-weight:700; border-radius:6px;">Exemplare</div>
-                <fieldset style="border:3px solid #7b5ec8; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                <div class="svws-collapsible-toggle" style="margin:2px 0 0; padding:7px 10px; background:#7b5ec8; color:#fff; font-weight:700; border-radius:6px;">Exemplare</div>
+                <fieldset class="svws-collapsible-content" style="border:3px solid #7b5ec8; border-radius:10px; padding:12px; margin:0; background:#fff;">
                     <p class="svws-muted" style="margin:0;">Noch keine Exemplare sichtbar. Waehle links einen Titel aus.</p>
                 </fieldset>
             <?php else: ?>
-                <div style="margin:2px 0 0; padding:7px 10px; background:#2f7dd1; color:#fff; font-weight:700; border-radius:6px;">Titel bearbeiten</div>
-                <fieldset style="border:3px solid #2f7dd1; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                <div class="svws-collapsible-toggle" style="margin:2px 0 0; padding:7px 10px; background:#2f7dd1; color:#fff; font-weight:700; border-radius:6px;">Titel bearbeiten</div>
+                <fieldset class="svws-collapsible-content" style="border:3px solid #2f7dd1; border-radius:10px; padding:12px; margin:0; background:#fff;">
                     <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px;">
                         <?= csrfField() ?>
                         <input type="hidden" name="title_id" value="<?= (int) $selectedTitle['id'] ?>">
@@ -589,8 +616,8 @@ ob_start();
                     </form>
                 </fieldset>
 
-                <div style="margin:2px 0 0; padding:7px 10px; background:#2f9d66; color:#fff; font-weight:700; border-radius:6px;">Exemplar anlegen</div>
-                <fieldset style="border:3px solid #2f9d66; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                <div class="svws-collapsible-toggle" style="margin:2px 0 0; padding:7px 10px; background:#2f9d66; color:#fff; font-weight:700; border-radius:6px;">Exemplar anlegen</div>
+                <fieldset class="svws-collapsible-content" style="border:3px solid #2f9d66; border-radius:10px; padding:12px; margin:0; background:#fff;">
                     <form method="post" style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:8px;">
                         <?= csrfField() ?>
                         <input type="hidden" name="action" value="create_copy">
@@ -617,8 +644,8 @@ ob_start();
                     </form>
                 </fieldset>
 
-                <div style="margin:2px 0 0; padding:7px 10px; background:#7b5ec8; color:#fff; font-weight:700; border-radius:6px;">Exemplare</div>
-                <fieldset style="border:3px solid #7b5ec8; border-radius:10px; padding:12px; margin:0; background:#fff;">
+                <div class="svws-collapsible-toggle" style="margin:2px 0 0; padding:7px 10px; background:#7b5ec8; color:#fff; font-weight:700; border-radius:6px;">Exemplare</div>
+                <fieldset class="svws-collapsible-content" style="border:3px solid #7b5ec8; border-radius:10px; padding:12px; margin:0; background:#fff;">
                 <table class="svws-tight">
                     <thead>
                     <tr>
@@ -934,6 +961,53 @@ ob_start();
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     window.location.href = href;
+                }
+            });
+        });
+    })();
+
+    (function () {
+        var toggles = document.querySelectorAll('.svws-collapsible-toggle');
+        if (!toggles.length) {
+            return;
+        }
+        var flashAction = <?= json_encode($flashAction) ?>;
+        var openMedienOnLoad = flashAction === 'create_title' || flashAction === 'create_title_from_scan';
+        var openExemplarOnLoad = flashAction === 'create_copy';
+
+        function setCollapsed(toggle, content, collapsed) {
+            content.classList.toggle('is-collapsed', collapsed);
+            toggle.classList.toggle('is-collapsed', collapsed);
+            toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        }
+
+        toggles.forEach(function (toggle) {
+            var content = toggle.nextElementSibling;
+            if (!content || !content.classList.contains('svws-collapsible-content')) {
+                return;
+            }
+
+            toggle.setAttribute('role', 'button');
+            toggle.setAttribute('tabindex', '0');
+
+            var title = (toggle.textContent || '').trim().toLowerCase();
+            var shouldStartCollapsed = title === 'medien' || title === 'exemplar anlegen';
+            if (title === 'medien' && openMedienOnLoad) {
+                shouldStartCollapsed = false;
+            }
+            if (title === 'exemplar anlegen' && openExemplarOnLoad) {
+                shouldStartCollapsed = false;
+            }
+            setCollapsed(toggle, content, shouldStartCollapsed);
+
+            toggle.addEventListener('click', function () {
+                setCollapsed(toggle, content, !content.classList.contains('is-collapsed'));
+            });
+
+            toggle.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setCollapsed(toggle, content, !content.classList.contains('is-collapsed'));
                 }
             });
         });
