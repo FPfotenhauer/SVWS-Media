@@ -1,16 +1,16 @@
 # SVWS-Media
 
-Ein schlankes Medienverwaltungsprogramm fuer Schulen in NRW, orientiert am SVWS-Paradigma.
+Ein schlankes Medienverwaltungsprogramm für Schulen in NRW, orientiert am SVWS‑Paradigma.
 
 ## Funktionsumfang
 
-- serverseitig gerenderte PHP-Webanwendung mit SQLite
+- serverseitig gerenderte PHP‑Webanwendung mit SQLite
 - Login/Logout und lokale Benutzerverwaltung (admin/viewer)
-- Medienverwaltung mit Titel/Exemplar-Modell
-- Barcode-Ausleihe und Rueckgabe inkl. Zuordnung unbekannter Barcodes
+- Medienverwaltung mit Titel/Exemplar‑Modell
+- Barcode‑Ausleihe und Rückgabe inkl. Zuordnung unbekannter Barcodes
 - Ausleiherverwaltung (Memo, Sperren, Kontomigration)
-- SVWS-Synchronisation (Schueler, Lehrkraefte)
-- Report-Hub mit Druckansichten und CSV-Exporten
+- SVWS‑Synchronisation (Schüler, Lehrkräfte)
+- Report‑Hub mit Druckansichten und CSV‑Exporten
 
 ## Benutzerhandbuch
 
@@ -18,7 +18,7 @@ https://fpfotenhauer.github.io/SVWS-Media/
 
 ## Architektur
 
-Browser -> PHP Web App -> SQLite
+Browser → PHP Web App → SQLite
 
 Hinweise zur Architektur und Entscheidungen:
 
@@ -83,7 +83,7 @@ docs/
 - PHP-Erweiterungen: pdo_sqlite, sqlite3, curl, zlib, json
 - Schreibrechte auf data/
 
-Pruefen:
+Prüfen:
 
 ```bash
 php -v
@@ -101,7 +101,7 @@ Danach im Browser:
 
 - http://127.0.0.1:8080/login.php
 
-### Alternative ohne lokale PHP-Installation (Docker)
+### Alternative ohne lokale PHP‑Installation (Docker)
 
 ```bash
 cd /pfad/zu/SVWS-Media
@@ -111,7 +111,7 @@ docker run --rm -it -p 8080:8080 -v "$PWD":/app -w /app php:8.3-cli \
 
 ### Start mit Docker Compose (empfohlen)
 
-Im Projekt liegt eine fertige docker-compose.yml.
+Im Projekt liegt eine fertige `docker-compose.yml`.
 
 Starten:
 
@@ -138,26 +138,26 @@ Danach im Browser:
 
 Hinweis:
 
-- Der Compose-Service laeuft bewusst als root im Container, damit SQLite auf Linux-Bind-Mounts stabil schreiben kann.
+- Prüfen Sie Dateiberechtigungen auf dem Host. Die Compose‑Konfiguration enthält Workarounds, damit SQLite auf Linux‑Bind‑Mounts schreiben kann; idealerweise läuft der Container nicht als `root`.
 
 ### Erstlogin
 
-- Benutzer: Admin
-- Passwort: admin
+- Benutzer: `Admin`
+- Passwort: `admin`
 
-Wichtig: Passwort nach dem ersten Login in users.php aendern.
+Wichtig: Passwort nach dem ersten Login in der Benutzerverwaltung ändern.
 
 ## Konfiguration
 
-Optional per Umgebungsvariablen (vor allem fuer SVWS-Sync):
+Optional per Umgebungsvariablen (vor allem für SVWS‑Sync):
 
-- SVWS_BASE_URL (Default: https://localhost:8443)
-- SVWS_SCHEMA (kein Default, muss fuer Sync gesetzt sein)
-- SVWS_ID_LERNPLATTFORM (Default: 1)
-- SVWS_ID_SCHULJAHRESABSCHNITT (Default: 1)
-- SVWS_VERIFY_TLS (true/false)
-- SVWS_USERNAME (Default: Admin)
-- SVWS_PASSWORD (Default: leer)
+- `SVWS_BASE_URL` (Default: https://localhost:8443)
+- `SVWS_SCHEMA` (kein Default, muss für Sync gesetzt sein)
+- `SVWS_ID_LERNPLATTFORM` (Default: 1)
+- `SVWS_ID_SCHULJAHRESABSCHNITT` (Default: 1)
+- `SVWS_VERIFY_TLS` (true/false)
+- `SVWS_USERNAME` (Default: Admin)
+- `SVWS_PASSWORD` (Default: leer)
 
 Beispiel:
 
@@ -172,7 +172,7 @@ export SVWS_PASSWORD="<passwort>"
 php -S 127.0.0.1:8080 -t public
 ```
 
-Mit Docker Compose koennen die gleichen Variablen z. B. ueber eine .env im Projektverzeichnis gesetzt werden:
+Mit Docker Compose können die gleichen Variablen z. B. über eine `.env` im Projektverzeichnis gesetzt werden:
 
 ```env
 SVWS_BASE_URL=https://meineIp:8443
@@ -187,15 +187,15 @@ APP_SECRET=<optional-fester-secret-key>
 
 ## Navigation / Seiten
 
-- /login.php
-- /dashboard.php
-- /media_list.php
-- /lending.php
-- /borrowers.php
-- /reports.php
-- /sync_svws.php
-- /sync_data.php
-- /users.php (nur Rolle admin)
+- `/login.php`
+- `/dashboard.php`
+- `/media_list.php`
+- `/lending.php`
+- `/borrowers.php`
+- `/reports.php`
+- `/sync_svws.php`
+- `/sync_data.php`
+- `/users.php` (nur Rolle `admin`)
 
 ## Datenmodell (Kurzuebersicht)
 
@@ -208,12 +208,12 @@ APP_SECRET=<optional-fester-secret-key>
 
 ## Aktueller Stand
 
-- Login, Rollen und User-Administration verfuegbar
-- Medien-CRUD inkl. Exemplarverwaltung aktiv
-- Lending-Flows (einzeln) aktiv
+- Login, Rollen und User‑Administration verfügbar
+- Medien‑CRUD inkl. Exemplarverwaltung aktiv
+- Lending‑Flows (einzeln) aktiv
 - Ausleiherverwaltung inkl. Sperre/Memo/Migration aktiv
-- Report-Hub mit HTML-Druck und CSV-Export aktiv
-- SVWS-Sync und Datenansichten aktiv
+- Report‑Hub mit HTML‑Druck und CSV‑Export aktiv
+- SVWS‑Sync und Datenansichten aktiv
 
 ## SVWS-Synchronisation
 
@@ -223,16 +223,16 @@ SVWS-Media kann Daten vom SVWS-Server ueber den GZIP-Endpunkt importieren:
 
 Ablauf in der App:
 
-1. /sync_svws.php oeffnen
-2. Base URL, Schema und IDs pruefen
-3. optional BasicAuth und TLS-Verifikation setzen
+1. `/sync_svws.php` öffnen
+2. Base‑URL, Schema und IDs prüfen
+3. optional BasicAuth und TLS‑Verifikation setzen
 4. Synchronisation starten
-5. Ergebnis in /sync_data.php pruefen
+5. Ergebnis in `/sync_data.php` prüfen
 
 Persistiert werden:
 
-- Schueler (svws_students)
-- Lehrkraefte (svws_teachers)
+- Schüler (svws_students)
+- Lehrkräfte (svws_teachers)
 
 ## Deployment
 
@@ -251,7 +251,7 @@ Minimaler Ablauf:
 
 ### Option B: Reverse Proxy vor PHP Built-in Server
 
-Fuer kleine interne Umgebungen kann ein Reverse Proxy (Nginx/Traefik/Caddy) vor dem Built-in Server laufen.
+Für kleine interne Umgebungen kann ein Reverse Proxy (Nginx/Traefik/Caddy) vor dem Built‑in Server laufen.
 
 Start der App:
 
@@ -285,10 +285,10 @@ server {
 
 ## Troubleshooting
 
-- Fehler "php: command not found": PHP installieren oder Docker-Start (siehe oben) nutzen.
-- Fehler "attempt to write a readonly database" mit Docker: Container mit `docker compose down` stoppen und mit der bereitgestellten Compose-Datei neu starten (`docker compose up -d`).
-- Sync liefert 401/403: Zugangsdaten, Schema und Endpunkt pruefen.
-- Frontend wirkt traege: nach grossen Syncs Browser neu laden und bei Bedarf Datenbankgroesse in data/database.sqlite pruefen.
+- Fehler "php: command not found": PHP installieren oder Docker‑Start (siehe oben) nutzen.
+- Fehler "attempt to write a readonly database" mit Docker: Container mit `docker compose down` stoppen und mit der bereitgestellten Compose‑Datei neu starten (`docker compose up -d`).
+- Sync liefert 401/403: Zugangsdaten, Schema und Endpunkt prüfen.
+- Frontend wirkt träge: nach großen Syncs Browser neu laden und bei Bedarf Datenbankgröße in `data/database.sqlite` prüfen.
 
 ## Naechste Schritte
 

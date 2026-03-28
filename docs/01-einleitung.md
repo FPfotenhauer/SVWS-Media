@@ -14,5 +14,13 @@ Dieses Benutzerhandbuch richtet sich an Anwender:innen mit unterschiedlichen Rol
 
 Am Anfang jedes Kapitels finden Sie eine kurze Beschreibung, gefolgt von Schritt-für-Schritt-Anleitungen und Screenshots, wo sinnvoll. Wenn Sie weitere Themen vermissen, melden Sie sich bitte beim Support oder fügen Sie Vorschläge im Projekt-Repository ein.
 
+**Wichtige Hinweise:**
+- **Zielgruppe:** SVWS‑Media richtet sich an Schulen, denen ein einfaches, leicht bedienbares Tool zur Verwaltung von Medien ausreicht.
+- **ISBN‑Erkennung:** Eine automatische ISBN‑Erkennung soll das Anlegen von Schulbüchern und anderen gedruckten Medien deutlich erleichtern.
+- **Installation:** Das Tool kann sowohl im internen Schulnetzwerk als auch auf einem externen Webspace betrieben werden.
+- **Offline‑Synchronisation:** Es ist vorgesehen, eine Synchronisation mit dem SVWS‑Server auch in Szenarien ohne dauerhafte Internetverbindung zu unterstützen.
+
 --
 Stand: Benutzerhandbuch für SVWS‑Media
+
+[Zurück zum Inhalt](index.md) | [Weiter zu Kapitel 02](02-zielgruppe-und-rollen.md)
