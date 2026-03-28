@@ -12,6 +12,10 @@ Ein schlankes Medienverwaltungsprogramm fuer Schulen in NRW, orientiert am SVWS-
 - SVWS-Synchronisation (Schueler, Lehrkraefte)
 - Report-Hub mit Druckansichten und CSV-Exporten
 
+## Benutzerhandbuch
+
+https://fpfotenhauer.github.io/SVWS-Media/
+
 ## Architektur
 
 Browser -> PHP Web App -> SQLite
