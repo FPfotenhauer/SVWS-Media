@@ -790,12 +790,16 @@ $isDashboardPage = mb_strtolower((string) ($pageTitle ?? '')) === 'dashboard';
 
     <div class="svws-workspace">
         <header class="svws-topbar">
-            <div>
-                <h1 class="<?= $isDashboardPage ? 'svws-topbar-title-dashboard' : '' ?>"><?= htmlspecialchars($pageTitle) ?></h1>
-                <div class="svws-top-meta">
-                    <?= htmlspecialchars($currentUser['username'] ?? 'Gast') ?> | <?= htmlspecialchars($currentUser['role'] ?? 'viewer') ?>
+            <?php if ($topbarLeft !== ''): ?>
+                <?= $topbarLeft ?>
+            <?php else: ?>
+                <div>
+                    <h1 class="<?= $isDashboardPage ? 'svws-topbar-title-dashboard' : '' ?>"><?= htmlspecialchars($pageTitle) ?></h1>
+                    <div class="svws-top-meta">
+                        <?= htmlspecialchars($currentUser['username'] ?? 'Gast') ?> | <?= htmlspecialchars($currentUser['role'] ?? 'viewer') ?>
+                    </div>
                 </div>
-            </div>
+            <?php endif; ?>
             <div style="display: flex; gap: 8px; align-items: center;">
                 <input type="checkbox" id="dark-mode-toggle" style="width: 40px; height: 24px; cursor: pointer;" aria-label="Dark Mode Toggle">
                 <button class="svws-help-btn" type="button" onclick="alert('Hilfe wird bald verfügbar');">Hilfe</button>

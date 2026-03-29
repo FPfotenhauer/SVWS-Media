@@ -188,6 +188,25 @@ $copies = $selectedTitle !== null ? MediaService::getCopiesByTitleId((int) $sele
 
 ob_start();
 ?>
+<div class="svws-content-header" style="margin-bottom:0">
+    <div class="svws-avatar">M</div>
+    <div class="svws-content-header-main">
+        <div>
+            <p class="svws-title-main">Medienbestand</p>
+            <div class="svws-title-sub">Bibliothek und Ausleihe</div>
+        </div>
+        <?php if ($flashMessage !== ''): ?>
+            <p class="svws-header-status svws-header-status--<?= $flashType === 'error' ? 'error' : 'success' ?>">
+                <?= htmlspecialchars($flashMessage) ?>
+            </p>
+        <?php endif; ?>
+    </div>
+</div>
+<?php
+$topbarLeft = ob_get_clean();
+
+ob_start();
+?>
 <style>
     .svws-title-create-actions {
         display: flex;
@@ -536,21 +555,6 @@ ob_start();
 
     <section class="svws-panel">
         <div class="svws-panel-body svws-detail-stack">
-            <div class="svws-content-header">
-                <div class="svws-avatar">M</div>
-                <div class="svws-content-header-main">
-                    <div>
-                        <p class="svws-title-main">Medienbestand</p>
-                        <div class="svws-title-sub">Bibliothek und Ausleihe</div>
-                    </div>
-                    <?php if ($flashMessage !== ''): ?>
-                        <p class="svws-header-status svws-header-status--<?= $flashType === 'error' ? 'error' : 'success' ?>">
-                            <?= htmlspecialchars($flashMessage) ?>
-                        </p>
-                    <?php endif; ?>
-                </div>
-            </div>
-
             <div class="svws-collapsible-toggle" style="margin:2px 0 0; padding:7px 10px; background:#1f5c98; color:#fff; font-weight:700; border-radius:6px;">Medien</div>
             <fieldset class="svws-collapsible-content" style="border:3px solid #1f5c98; border-radius:10px; padding:12px; margin:0; background:#fff;">
                 <form method="post" style="display:grid; gap:6px; margin-bottom:8px;">
@@ -1016,4 +1020,4 @@ ob_start();
 <?php
 $content = ob_get_clean();
 
-renderLayout('Medienliste', $content, 'media');
+renderLayout('Medienliste', $content, 'media', $topbarLeft);
